@@ -306,8 +306,6 @@ const generateotp = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
-import nodemailer from "nodemailer";
-
 const emailTransporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
