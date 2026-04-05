@@ -32,14 +32,7 @@ const Header_worker = ({ isOnline }) => {
 
           const data = await res.json();
 
-          const city =
-            data.address?.city ||
-            data.address?.town ||
-            data.address?.village ||
-            data.address?.state ||
-            data.display_name ||
-            "Unknown";
-
+          const city = data.display_name|| 'Unknown';
           setLocation(city);
         } catch (err) {
           console.error(err);
