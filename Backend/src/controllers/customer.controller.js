@@ -380,14 +380,14 @@ const generateOtpobj = asyncHandler(async (req, res) => {
   if (!smsSent && email) {
     try {
       console.log("Sending EMAIL to:", email);
-
-      await transporter.sendMail({
-        from: process.env.EMAIL,
+  
+      await emailTransporter.sendMail({
+        from: `"Karigar OTP" <${process.env.EMAIL}>`,
         to: email,
         subject: "Karigar OTP",
         text: `Your OTP is ${otp}`,
       });
-
+  
       emailSent = true;
     } catch (err) {
       emailError = err;
