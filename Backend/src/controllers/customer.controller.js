@@ -381,14 +381,6 @@ const generateOtpobj = asyncHandler(async (req, res) => {
     try {
       console.log("Sending EMAIL to:", email);
 
-      const transporter = nodemailer.createTransport({
-        service: "gmail",
-        auth: {
-          user: process.env.EMAIL,
-          pass: process.env.EMAIL_PASS,
-        },
-      });
-
       await transporter.sendMail({
         from: process.env.EMAIL,
         to: email,
