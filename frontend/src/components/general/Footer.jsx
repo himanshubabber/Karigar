@@ -1,6 +1,6 @@
 const Footer = () => {
   return (
-    <footer className="bg-light text-dark pt-5 mt-5 border-top">
+    <footer className="bg-light text-dark py-4 mt-4 border-top">
       {/* Added text-center text-sm-start: Centers text on phones, left-aligns on tablets+ */}
       <div className="container text-center text-sm-start">
         <div className="row row-cols-1 row-cols-sm-2 row-cols-md-4">
