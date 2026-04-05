@@ -11,51 +11,36 @@ const Header_worker = ({ isOnline }) => {
 
   const detectLocation = () => {
     if (!navigator.geolocation) {
-      alert("Geolocation not supported.");
+      alert('Geolocation not supported.');
       return;
     }
-  
+
+    setIsLoadingLoc(true);
+
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const { latitude, longitude } = position.coords;
-  
         try {
           const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
+             { headers: { 'User-Agent': 'KarigarApp/1.0' } }
           );
-  
-          if (!res.ok) {
-            throw new Error("Geocoding API error");
-          }
-  
           const data = await res.json();
-  
-          // ✅ Better extraction (city-level accuracy)
-          const city =
-            data.address?.city ||
-            data.address?.town ||
-            data.address?.village ||
-            data.address?.suburb ||
-            data.display_name ||
-            "Unknown";
-  
+          const city = data.display_name|| 'Unknown';
           setLocation(city);
-        } catch (err) {
-          console.error(err);
-          alert("Failed to fetch location");
+        } catch {
+          alert('Failed to fetch location');
+        } finally {
+          setIsLoadingLoc(false);
         }
       },
-      (error) => {
-        console.error(error);
-        alert("Permission denied or location unavailable");
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0,
+      () => {
+        alert('Permission denied or error occurred. Please check browser settings.');
+        setIsLoadingLoc(false);
       }
     );
   };
+
   
   return (
     <header className="bg-white shadow-sm border-bottom">
