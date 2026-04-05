@@ -8,6 +8,7 @@ import { ServiceRequest } from "../models/serviceRequest.model.js";
 import jwt from "jsonwebtoken";
 import twilio from "twilio";
 import { OAuth2Client } from "google-auth-library";
+import nodemailer from "nodemailer";
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -305,7 +306,7 @@ const generateotp = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
-import nodemailer from "nodemailer";
+
 
 const generateOtpobj = asyncHandler(async (req, res) => {
   const { serviceRequestId } = req.body;
