@@ -142,29 +142,6 @@ const Header_worker = ({ isOnline }) => {
             />
           </form>
 
-          {/* Profile */}
-          <div className="dropdown">
-            <a
-              href="#"
-              className="d-block link-dark text-decoration-none dropdown-toggle"
-              data-bs-toggle="dropdown"
-            >
-              <img
-                src="https://github.com/mdo.png"
-                alt="User"
-                width="36"
-                height="36"
-                className="rounded-circle shadow-sm"
-              />
-            </a>
-            <ul className="dropdown-menu dropdown-menu-end text-small mt-2">
-              <li><a className="dropdown-item" href="#">New project...</a></li>
-              <li><a className="dropdown-item" href="#">Settings</a></li>
-              <li><a className="dropdown-item" href="#">Profile</a></li>
-              <li><hr className="dropdown-divider" /></li>
-              <li><a className="dropdown-item" href="#">Sign out</a></li>
-            </ul>
-          </div>
         </div>
       </div>
     </header>
