@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import "bootstrap-icons/font/bootstrap-icons.css";
 
 const Header_worker = ({ isOnline }) => {
   const [location, setLocation] = useState("");
@@ -11,9 +12,10 @@ const Header_worker = ({ isOnline }) => {
     navigate("/all_requests");
   };
 
+  // ✅ IMPROVED LOCATION (FASTER + SAME FUNCTIONALITY)
   const detectLocation = () => {
     if (!navigator.geolocation) {
-      alert('Geolocation not supported.');
+      alert("Geolocation not supported.");
       return;
     }
 
@@ -22,23 +24,39 @@ const Header_worker = ({ isOnline }) => {
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const { latitude, longitude } = position.coords;
+
         try {
           const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
-             { headers: { 'User-Agent': 'KarigarApp/1.0' } }
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10&addressdetails=1`
           );
+
           const data = await res.json();
-          const city = data.display_name|| 'Unknown';
+
+          const city =
+            data.address?.city ||
+            data.address?.town ||
+            data.address?.village ||
+            data.address?.state ||
+            data.display_name ||
+            "Unknown";
+
           setLocation(city);
-        } catch {
-          alert('Failed to fetch location');
+        } catch (err) {
+          console.error(err);
+          alert("Failed to fetch location");
         } finally {
           setIsLoadingLoc(false);
         }
       },
-      () => {
-        alert('Permission denied or error occurred. Please check browser settings.');
+      (error) => {
+        console.log("Geo error:", error);
+        alert("Location permission denied or unavailable.");
         setIsLoadingLoc(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 8000,
+        maximumAge: 60000,
       }
     );
   };
@@ -69,7 +87,7 @@ const Header_worker = ({ isOnline }) => {
           </button>
         )}
 
-        {/* Menu */}
+        {/* Navigation */}
         <div className="d-flex align-items-center gap-3 flex-nowrap">
 
           <ul className="nav align-items-center">
@@ -107,37 +125,86 @@ const Header_worker = ({ isOnline }) => {
             </li>
           </ul>
 
-          {/* Location */}
-          <div className="input-group input-group-stylish rounded-pill w-100 w-lg-auto" style={{ maxWidth: '100%', minWidth: '250px', lgMaxWidth: '320px' }}>
-                <span className="input-group-text ps-3">
-                  <i className="bi bi-geo-alt-fill"></i>
-                </span>
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="Location..."
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                />
-                <button
-                  className="btn btn-primary btn-detect m-1 rounded-pill d-flex align-items-center gap-2"
-                  onClick={detectLocation}
-                  type="button"
-                  disabled={isLoadingLoc}
-                >
-                  {isLoadingLoc ? (
-                     <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                  ) : (
-                     <i className="bi bi-crosshair"></i>
-                  )}
-                  {/* Show 'Detect' text only on larger screens */}
-                  <span className="d-none d-sm-inline">{isLoadingLoc ? '...' : 'Detect'}</span>
-                </button>
-              </div>
+          {/* LOCATION (ONLY IMPROVED PART) */}
+          <div
+            className="input-group input-group-stylish rounded-pill"
+            style={{ minWidth: "250px", maxWidth: "320px" }}
+          >
+            <span className="input-group-text ps-3">
+              <i className="bi bi-geo-alt-fill"></i>
+            </span>
 
-          
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Location..."
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+            />
+
+            <button
+              className="btn btn-primary btn-detect m-1 rounded-pill d-flex align-items-center gap-2"
+              onClick={detectLocation}
+              type="button"
+              disabled={isLoadingLoc}
+            >
+              {isLoadingLoc ? (
+                <span className="spinner-border spinner-border-sm" />
+              ) : (
+                <i className="bi bi-crosshair"></i>
+              )}
+
+              <span className="d-none d-sm-inline">
+                {isLoadingLoc ? "..." : "Detect"}
+              </span>
+            </button>
+          </div>
+
         </div>
       </div>
+
+      {/* STYLES */}
+      <style>{`
+        .input-group-stylish {
+          border: 1px solid #e9ecef;
+          padding: 3px;
+          background: #f8f9fa;
+          border-radius: 50px;
+          transition: all 0.25s ease;
+          align-items: center;
+        }
+
+        .input-group-stylish:focus-within {
+          background: #fff;
+          border-color: #0d6efd;
+          box-shadow: 0 0 0 3px rgba(13,110,253,0.15);
+        }
+
+        .input-group-stylish .form-control {
+          border: none;
+          background: transparent;
+          box-shadow: none;
+          font-size: 0.95rem;
+        }
+
+        .input-group-stylish .input-group-text {
+          background: transparent;
+          border: none;
+          color: #0d6efd;
+        }
+
+        .btn-detect {
+          border-radius: 50px !important;
+          padding: 6px 14px;
+          font-size: 0.85rem;
+          transition: 0.2s ease;
+        }
+
+        .btn-detect:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 2px 8px rgba(13,110,253,0.25);
+        }
+      `}</style>
     </header>
   );
 };
