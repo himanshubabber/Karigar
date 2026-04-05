@@ -146,7 +146,7 @@ const Header = () => {
               </div>
 
               {/* Search Input - Full width on mobile */}
-              <div className="input-group input-group-stylish rounded-pill w-100 w-lg-auto" style={{ maxWidth: '100%', lgMaxWidth: '220px' }}>
+              {/* <div className="input-group input-group-stylish rounded-pill w-100 w-lg-auto" style={{ maxWidth: '100%', lgMaxWidth: '220px' }}>
                  <span className="input-group-text ps-3">
                   <i className="bi bi-search text-muted fs-6"></i>
                 </span>
@@ -155,7 +155,7 @@ const Header = () => {
                   className="form-control ps-1"
                   placeholder="Search..."
                 />
-              </div>
+              </div> */}
             </div>
           </div>
         </div>

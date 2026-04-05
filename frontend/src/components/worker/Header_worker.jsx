@@ -13,7 +13,7 @@ const Header_worker = ({ isOnline }) => {
 
   const detectLocation = () => {
     if (!navigator.geolocation) {
-      alert("Geolocation not supported.");
+      alert('Geolocation not supported.');
       return;
     }
 
@@ -22,43 +22,23 @@ const Header_worker = ({ isOnline }) => {
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const { latitude, longitude } = position.coords;
-
         try {
           const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
+             { headers: { 'User-Agent': 'KarigarApp/1.0' } }
           );
-
-          if (!res.ok) {
-            throw new Error("Failed to fetch location");
-          }
-
           const data = await res.json();
-
-          const city =
-            data.address?.city ||
-            data.address?.town ||
-            data.address?.village ||
-            data.address?.suburb ||
-            data.display_name ||
-            "Unknown";
-
+          const city = data.display_name|| 'Unknown';
           setLocation(city);
-        } catch (err) {
-          console.error("Location fetch error:", err);
-          alert("Failed to fetch location");
+        } catch {
+          alert('Failed to fetch location');
         } finally {
           setIsLoadingLoc(false);
         }
       },
-      (error) => {
-        console.error("Geolocation error:", error);
-        alert("Permission denied or location unavailable");
+      () => {
+        alert('Permission denied or error occurred. Please check browser settings.');
         setIsLoadingLoc(false);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0,
       }
     );
   };
@@ -128,36 +108,34 @@ const Header_worker = ({ isOnline }) => {
           </ul>
 
           {/* Location */}
-          <div className="d-flex align-items-center" style={{ maxWidth: "260px" }}>
-            <input
-              type="text"
-              className="form-control rounded-pill px-3 me-2"
-              placeholder="Enter or Detect Location"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-            />
+          <div className="input-group input-group-stylish rounded-pill w-100 w-lg-auto" style={{ maxWidth: '100%', minWidth: '250px', lgMaxWidth: '320px' }}>
+                <span className="input-group-text ps-3">
+                  <i className="bi bi-geo-alt-fill"></i>
+                </span>
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Location..."
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                />
+                <button
+                  className="btn btn-primary btn-detect m-1 rounded-pill d-flex align-items-center gap-2"
+                  onClick={detectLocation}
+                  type="button"
+                  disabled={isLoadingLoc}
+                >
+                  {isLoadingLoc ? (
+                     <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                  ) : (
+                     <i className="bi bi-crosshair"></i>
+                  )}
+                  {/* Show 'Detect' text only on larger screens */}
+                  <span className="d-none d-sm-inline">{isLoadingLoc ? '...' : 'Detect'}</span>
+                </button>
+              </div>
 
-            <button
-              className="btn btn-outline-primary rounded-pill d-flex align-items-center gap-1"
-              onClick={detectLocation}
-              type="button"
-              disabled={isLoadingLoc}
-            >
-              <i className="bi bi-crosshair"></i>
-              <span className="d-none d-sm-inline">
-                {isLoadingLoc ? "Loading..." : "Detect"}
-              </span>
-            </button>
-          </div>
-
-          {/* Search */}
-          <form className="d-flex" style={{ maxWidth: "180px" }}>
-            <input
-              type="search"
-              className="form-control rounded-pill px-3 py-2"
-              placeholder="Search..."
-            />
-          </form>
+          
         </div>
       </div>
     </header>
