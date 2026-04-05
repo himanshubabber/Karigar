@@ -329,52 +329,52 @@ const generateOtpobj = asyncHandler(async (req, res) => {
   const email = customer.email;
 
   if (!phoneNumber && !email) {
-    return res.status(400).json({ message: "No phone or email found for customer" });
+    return res.status(400).json({ message: "No phone or email found" });
   }
 
   const otp = generateotp();
 
-  const expiresAt = new Date(Date.now() + 100000 * 1000);
-
   await Otp.findOneAndUpdate(
     { serviceRequestId },
-    { otp, expiresAt, verified: false },
-    { new: true, upsert: true, setDefaultsOnInsert: true }
+    { otp, expiresAt: new Date(Date.now() + 10 * 60 * 1000), verified: false },
+    { new: true, upsert: true }
   );
 
-  console.log("Generated OTP:", otp);
+  console.log("OTP GENERATED:", otp);
+
+  let smsError = null;
+  let emailError = null;
 
   let smsSent = false;
   let emailSent = false;
 
-  // ---------------------------
-  // 1. TRY SMS FIRST
-  // ---------------------------
+  // ---------------- SMS ----------------
   if (phoneNumber) {
     try {
-      let formattedNumber = phoneNumber;
+      let formattedNumber = phoneNumber.startsWith("+")
+        ? phoneNumber
+        : "+91" + phoneNumber;
 
-      if (!formattedNumber.startsWith("+")) {
-        formattedNumber = "+91" + formattedNumber;
-      }
+      console.log("Sending SMS to:", formattedNumber);
 
       await twilioClient.messages.create({
-        body: `Your OTP code for Karigar is: ${otp}`,
+        body: `Your OTP is: ${otp}`,
         from: process.env.TWILIO_PHONE_NUMBER,
         to: formattedNumber,
       });
 
       smsSent = true;
     } catch (err) {
-      console.error("SMS failed, trying email...", err.message);
+      smsError = err;
+      console.error("❌ SMS FAILED FULL ERROR:", err);
     }
   }
 
-  // ---------------------------
-  // 2. FALLBACK → EMAIL
-  // ---------------------------
+  // ---------------- EMAIL ----------------
   if (!smsSent && email) {
     try {
+      console.log("Sending EMAIL to:", email);
+
       const transporter = nodemailer.createTransport({
         service: "gmail",
         auth: {
@@ -386,19 +386,24 @@ const generateOtpobj = asyncHandler(async (req, res) => {
       await transporter.sendMail({
         from: process.env.EMAIL,
         to: email,
-        subject: "Karigar OTP Verification",
-        text: `Your OTP code is: ${otp}`,
+        subject: "Karigar OTP",
+        text: `Your OTP is ${otp}`,
       });
 
       emailSent = true;
     } catch (err) {
-      console.error("Email send failed:", err.message);
+      emailError = err;
+      console.error("❌ EMAIL FAILED FULL ERROR:", err);
     }
   }
 
-  // ---------------------------
-  // FINAL RESPONSE
-  // ---------------------------
+  console.log("FINAL STATUS:", {
+    smsSent,
+    emailSent,
+    smsError,
+    emailError,
+  });
+
   if (smsSent || emailSent) {
     return res.status(200).json({
       message: "OTP sent successfully",
@@ -407,7 +412,11 @@ const generateOtpobj = asyncHandler(async (req, res) => {
   }
 
   return res.status(500).json({
-    message: "Failed to send OTP via SMS and Email",
+    message: "OTP failed completely",
+    error: {
+      smsError: smsError?.message,
+      emailError: emailError?.message,
+    },
   });
 });
 
