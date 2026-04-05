@@ -305,8 +305,11 @@ const generateotp = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
+import nodemailer from "nodemailer";
+
 const generateOtpobj = asyncHandler(async (req, res) => {
   const { serviceRequestId } = req.body;
+
   if (!serviceRequestId) {
     return res.status(400).json({ message: "serviceRequestId is required" });
   }
@@ -320,41 +323,91 @@ const generateOtpobj = asyncHandler(async (req, res) => {
   if (!customer) {
     return res.status(404).json({ message: "Customer not found for this service request" });
   }
-  console.log(customer)
 
-  let phoneNumber = customer.phone;
-  if (!phoneNumber) {
-    return res.status(400).json({ message: "Customer phone number is missing or invalid" });
+  const phoneNumber = customer.phone;
+  const email = customer.email;
+
+  if (!phoneNumber && !email) {
+    return res.status(400).json({ message: "No phone or email found for customer" });
   }
 
   const otp = generateotp();
-  const ONE_LAKH_SECONDS = 100000;
-  const expiresAt = new Date(Date.now() + ONE_LAKH_SECONDS * 1000);
+
+  const expiresAt = new Date(Date.now() + 100000 * 1000);
 
   await Otp.findOneAndUpdate(
     { serviceRequestId },
     { otp, expiresAt, verified: false },
     { new: true, upsert: true, setDefaultsOnInsert: true }
   );
-   console.log(otp)
-   if (!phoneNumber.startsWith('+')) {
-    phoneNumber = '+91' + phoneNumber;
-  }
-  try {
-    await twilioClient.messages.create({
-      body: `Your OTP code for Karigar is: ${otp}`,
-      from: process.env.TWILIO_PHONE_NUMBER,
-      to: phoneNumber,
-    });
 
-    return res.status(200).json({
-      message: "OTP generated and sent successfully",
-      otp,
-    });
-  } catch (error) {
-    console.error("Twilio SMS send error:", error);
-    return res.status(500).json({ message: "Failed to send OTP SMS" });
+  console.log("Generated OTP:", otp);
+
+  let smsSent = false;
+  let emailSent = false;
+
+  // ---------------------------
+  // 1. TRY SMS FIRST
+  // ---------------------------
+  if (phoneNumber) {
+    try {
+      let formattedNumber = phoneNumber;
+
+      if (!formattedNumber.startsWith("+")) {
+        formattedNumber = "+91" + formattedNumber;
+      }
+
+      await twilioClient.messages.create({
+        body: `Your OTP code for Karigar is: ${otp}`,
+        from: process.env.TWILIO_PHONE_NUMBER,
+        to: formattedNumber,
+      });
+
+      smsSent = true;
+    } catch (err) {
+      console.error("SMS failed, trying email...", err.message);
+    }
   }
+
+  // ---------------------------
+  // 2. FALLBACK → EMAIL
+  // ---------------------------
+  if (!smsSent && email) {
+    try {
+      const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          user: process.env.EMAIL,
+          pass: process.env.EMAIL_PASS,
+        },
+      });
+
+      await transporter.sendMail({
+        from: process.env.EMAIL,
+        to: email,
+        subject: "Karigar OTP Verification",
+        text: `Your OTP code is: ${otp}`,
+      });
+
+      emailSent = true;
+    } catch (err) {
+      console.error("Email send failed:", err.message);
+    }
+  }
+
+  // ---------------------------
+  // FINAL RESPONSE
+  // ---------------------------
+  if (smsSent || emailSent) {
+    return res.status(200).json({
+      message: "OTP sent successfully",
+      method: smsSent ? "sms" : "email",
+    });
+  }
+
+  return res.status(500).json({
+    message: "Failed to send OTP via SMS and Email",
+  });
 });
 
 /*
