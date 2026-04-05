@@ -16,7 +16,15 @@ const Footer = () => {
               <i className="bi bi-tools fs-2 me-2 text-primary"></i>
               <span className="fs-4 fw-bold">Karigar</span>
             </a>
-            <p className="text-muted">© 2025 Karigar<br />Quality services on demand.</p>
+            <p className="text-muted">
+             © Karigar Services<br />
+           Trusted platform for quality home services on demand.
+          </p>
+
+          <p className="text-muted">
+          Need help or have suggestions?<br />
+          Contact us at: <strong>karigar.mu.app@gmail.com</strong>
+         </p>
           </div>
 
           {/* Column 2: Services */}
