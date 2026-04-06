@@ -157,7 +157,7 @@ const Occupations = () => {
             <ServiceCard 
                 key={occ.title}
                 occupation={occ}
-                onNavigate={() => handleNavigation("/signin_customer")}
+                onNavigate={() => handleNavigation("/service_req_form")}
                 accentColor={colors.accentBrand}
             />
         ))}
