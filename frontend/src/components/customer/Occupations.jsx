@@ -28,6 +28,34 @@ const occupations = [
   { title: 'Fridge Repair', image: '/fridge.png' },
 ];
 
+const ServiceCard = ({ occupation, onNavigate, accentColor }) => {
+  return (
+    <div className="col-6 col-sm-4 col-md-3 service-card-col">
+      <div 
+        className="card service-card h-100 text-center" 
+        onClick={onNavigate}
+      >
+        <div className="image-wrapper">
+          <img 
+            src={occupation.image} 
+            alt={occupation.title} 
+            className="card-img-top"
+          />
+          <div className="overlay"></div>
+        </div>
+        <div className="card-body p-2 p-md-3">
+          <h6 
+            className="card-title fw-bold mb-0 mobile-card-title"
+            style={{ color: '#333' }}
+          >
+            {occupation.title}
+          </h6>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const Occupations = () => {
   const navigate = useNavigate();
   const { customer, setCustomer } = useCustomer();
