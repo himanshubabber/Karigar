@@ -326,13 +326,16 @@ const generateOtpobj = asyncHandler(async (req, res) => {
     return res.status(404).json({ message: "Service Request not found" });
   }
 
-  const customer = await Customer.findById(serviceRequest.customerId);
+  const customer = await Customer.findById(
+    serviceRequest.customerId || serviceRequest.customer
+  );
+
   if (!customer) {
-    return res.status(404).json({ message: "Customer not found for this service request" });
+    return res.status(404).json({ message: "Customer not found" });
   }
 
-  const phoneNumber = customer.phone;
-  const email = customer.email;
+  const { phone: phoneNumber, email, fullName } = customer;
+  const { category, description, createdAt } = serviceRequest;
 
   if (!phoneNumber && !email) {
     return res.status(400).json({ message: "No phone or email found" });
@@ -342,29 +345,30 @@ const generateOtpobj = asyncHandler(async (req, res) => {
 
   await Otp.findOneAndUpdate(
     { serviceRequestId },
-    { otp, expiresAt: new Date(Date.now() + 10 * 60 * 1000), verified: false },
+    {
+      otp,
+      expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+      verified: false,
+    },
     { new: true, upsert: true }
   );
 
   console.log("OTP GENERATED:", otp);
 
-  let smsError = null;
-  let emailError = null;
-
   let smsSent = false;
   let emailSent = false;
+  let smsError = null;
+  let emailError = null;
 
   // ---------------- SMS ----------------
   if (phoneNumber) {
     try {
-      let formattedNumber = phoneNumber.startsWith("+")
+      const formattedNumber = phoneNumber.startsWith("+")
         ? phoneNumber
         : "+91" + phoneNumber;
 
-      console.log("Sending SMS to:", formattedNumber);
-
       await twilioClient.messages.create({
-        body: `Your OTP is: ${otp}`,
+        body: `Your Karigar OTP is ${otp}. Do not share it with anyone.`,
         from: process.env.TWILIO_PHONE_NUMBER,
         to: formattedNumber,
       });
@@ -372,34 +376,44 @@ const generateOtpobj = asyncHandler(async (req, res) => {
       smsSent = true;
     } catch (err) {
       smsError = err;
-      console.error("❌ SMS FAILED FULL ERROR:", err);
+      console.error("❌ SMS FAILED:", err.message);
     }
   }
 
   // ---------------- EMAIL ----------------
   if (!smsSent && email) {
     try {
-      console.log("Sending EMAIL to:", email);
-  
       await emailTransporter.sendMail({
-        from: `"Karigar OTP" <${process.env.EMAIL}>`,
+        from: `"Karigar Support" <${process.env.EMAIL}>`,
         to: email,
-        subject: "Karigar OTP",
-        text: `Your OTP is ${otp}`,
+        subject: "Verify Your Service Request - OTP",
+        text: `Hello ${fullName || "User"},
+
+Your One-Time Password (OTP) is: ${otp}
+
+📌 Service Details:
+- Service: ${category || "N/A"}
+- Issue: ${description || "N/A"}
+- Requested At: ${createdAt ? new Date(createdAt).toLocaleString() : "N/A"}
+
+⚠️ Do not share this OTP with anyone.
+
+If you did not request this, please ignore this email.
+
+Best regards,  
+Karigar Team`,
       });
-  
+
       emailSent = true;
     } catch (err) {
       emailError = err;
-      console.error("❌ EMAIL FAILED FULL ERROR:", err);
+      console.error("❌ EMAIL FAILED:", err.message);
     }
   }
 
   console.log("FINAL STATUS:", {
     smsSent,
     emailSent,
-    smsError,
-    emailError,
   });
 
   if (smsSent || emailSent) {
@@ -417,7 +431,6 @@ const generateOtpobj = asyncHandler(async (req, res) => {
     },
   });
 });
-
 /*
 const generateOtpobj = asyncHandler(async (req, res) => {
   const { serviceRequestId } = req.body;
