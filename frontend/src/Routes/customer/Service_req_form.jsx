@@ -178,7 +178,7 @@ const Service_req_form = () => {
       const { otp, expiresAt } = otpRes.data;
       storeOtp({ otp, serviceRequestId, verified: false, expiresAt });
 
-      alert("Service request submitted and OTP generated!");
+      alert("Your request has been submitted! An OTP has been sent to your mobile number or email.");
       navigate("/location_user");
     } catch (err) {
       console.error(err);
