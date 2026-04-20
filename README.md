@@ -59,19 +59,27 @@
 
 ## 🧰 Tech Stack
 
-### Frontend
-* React.js
-* Tailwind CSS
-* React Router
-* Leaflet (Maps)
-* Context API
+### 🎨 Frontend
+* Core: React.js  
+* Styling: Tailwind CSS  
+* Routing: React Router  
+* Maps: Leaflet (Geospatial visualization)  
+* State Management: Context API  
 
-### Backend
-* Node.js
-* Express.js
-* MongoDB
-* JWT Authentication
-* Multer (Audio Uploads)
+---
+
+### ⚙️ Backend
+* Environment: Node.js  
+* Framework: Express.js  
+* Database: MongoDB (NoSQL)  
+* Authentication: JSON Web Tokens (JWT)  
+* File Handling: Multer (specialized for audio uploads)  
+
+---
+
+### 🔌 Third-Party Services
+* Payments: Razorpay (secure payment gateway integration)  
+* Communication: Twilio (SMS notifications / OTP services)  
 
 ---
 
@@ -125,7 +133,7 @@
 * Final Year CSE Student, DTU  
 * Full-Stack Web Developer
 * 📧 Email: **himanshusingh2087@gmail.com**
-* * 📬 Feedback or Queries: **karigar.mu.app@gmail.com**
+* 📬 Feedback or Queries: **karigar.mu.app@gmail.com**
  
 ---
 
