@@ -4,8 +4,10 @@
 > A full-stack web application that connects customers with nearby skilled workers  
 > such as plumbers, electricians, and carpenters — in real time.
 
-🔗 **Live Demo:** https://karigar-mu.vercel.app/  
-🔗 **Workflow:** https://drive.google.com/file/d/18v9C-WVOXxjLFcXRIIacTIzwdZiP0SGH/view?usp=sharing
+## 🔗 Links
+
+👉 Live Demo → https://karigar-mu.vercel.app/  
+🎥 Workflow → https://drive.google.com/file/d/18v9C-WVOXxjLFcXRIIacTIzwdZiP0SGH/view?usp=sharing
 ---
 
 ## ✨ Overview
