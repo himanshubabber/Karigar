@@ -70,7 +70,6 @@
 * Node.js
 * Express.js
 * MongoDB
-* Mongoose
 * JWT Authentication
 * Multer (Audio Uploads)
 
@@ -125,7 +124,8 @@
 **Himanshu Singh**  
 * Final Year CSE Student, DTU  
 * Full-Stack Web Developer
-* 📧 Email: **himanshusingh2087@gmail.com**  
+* 📧 Email: **himanshusingh2087@gmail.com**
+* * 📬 Feedback or Queries: **karigar.mu.app@gmail.com**
  
 ---
 
