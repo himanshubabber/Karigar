@@ -79,8 +79,8 @@
 
 ### 🔌 Third-Party Services
 * Payments: Razorpay (secure payment gateway integration)  
-* Communication: Twilio (SMS notifications / OTP services)  
-
+* SMS / OTP: Twilio (real-time notifications and verification)  
+* Email Service: Nodemailer (transactional email notifications)  
 ---
 
 ## 🏗️ Project Structure
@@ -138,3 +138,5 @@
 ---
 
 ⭐ *If you like this project, don’t forget to star the repository!*
+
+> ⚡ Note: The platform has been validated through real-world usage of complete service lifecycles, ensuring robustness across request handling, tracking, and completion flows.
