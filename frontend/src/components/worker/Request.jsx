@@ -7,7 +7,7 @@ import Spinner from "../../components/Style/Spinner.jsx"
 import {useWorker} from "../../Context/Worker_context.jsx"
 
 
-const Request = ({ request }) => {
+const Request = ({ request, distanceKm }) => {
   const { token } = useWorker();
   const navigate = useNavigate();
   const { updateSelectedReq } = useServiceReq();
@@ -25,6 +25,7 @@ const Request = ({ request }) => {
     orderStatus,
     jobStatus,
     visitingCharge,
+    quoteAmount,
     createdAt,
   } = request;
 
@@ -111,6 +112,15 @@ const Request = ({ request }) => {
        </p>
       <p><strong>Issue:</strong> {description}</p>
       <p><FaRupeeSign className="me-2 text-success" /> <strong>Visiting Charge:</strong> ₹{visitingCharge}</p>
+      {quoteAmount != null && (
+        <p><FaRupeeSign className="me-2 text-primary" /> <strong>Quote Amount:</strong> ₹{quoteAmount}</p>
+      )}
+      {distanceKm != null && (
+        <p className="text-secondary">
+          <FaMapMarkerAlt className="me-2 text-primary" /> <strong>Distance:</strong>{" "}
+          {distanceKm < 1 ? `${Math.round(distanceKm * 1000)} m` : `${distanceKm.toFixed(1)} Km`}
+        </p>
+      )}
       <p><strong>Status:</strong> {orderStatus} | {jobStatus}</p>
       <p><strong>Created:</strong> {new Date(createdAt).toLocaleString()}</p>
 

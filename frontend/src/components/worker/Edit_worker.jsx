@@ -136,6 +136,10 @@ const Edit_worker = () => {
 
       const updated = data.data.workingCategory;
       setWorkingCategory(updated); // updated from backend
+      setWorker((prev) => ({
+        ...prev,
+        workingCategory: updated,
+      }));
       const nextAvailable = availableCategories.find(
         (c) => !updated.some((cat) => cat.toLowerCase() === c.toLowerCase())
       ) || availableCategories[0];
