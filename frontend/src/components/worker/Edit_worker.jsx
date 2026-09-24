@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import api from "../../api.js";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useWorker } from "../../Context/Worker_context";
 
@@ -28,11 +28,11 @@ const Edit_worker = () => {
 
   const updateFieldAPI = async (field, value) => {
     const apiMap = {
-      fullName: "https://karigarbackend.vercel.app/api/v1/worker/update-fullName",
-      email: "https://karigarbackend.vercel.app/api/v1/worker/update-email",
-      phone: "https://karigarbackend.vercel.app/api/v1/worker/update-phone",
-      address: "https://karigarbackend.vercel.app/api/v1/worker/update-address",
-      profilePhoto: "https://karigarbackend.vercel.app/api/v1/worker/update-profile-photo",
+      fullName: "/api/v1/worker/update-fullName",
+      email: "/api/v1/worker/update-email",
+      phone: "/api/v1/worker/update-phone",
+      address: "/api/v1/worker/update-address",
+      profilePhoto: "/api/v1/worker/update-profile-photo",
     };
 
     try {
@@ -40,9 +40,8 @@ const Edit_worker = () => {
         const formData = new FormData();
         formData.append("profilePhoto", value);
 
-        const { data } = await axios.patch(apiMap[field], formData, {
+        const { data } = await api.patch(apiMap[field], formData, {
           headers: { Authorization: `Bearer ${token}` },
-          withCredentials: true,
         });
       //  setProfilePhoto(data.data.profilePhoto);
 
@@ -56,10 +55,9 @@ const Edit_worker = () => {
         console.log(data.data);
         alert("Profile photo updated successfully!");
       } else {
-        await axios.patch(apiMap[field], { [field]: value }, 
+        await api.patch(apiMap[field], { [field]: value }, 
           {   
             headers: { Authorization: `Bearer ${token}` },
-          withCredentials: true,
            });
         alert(`${field} updated successfully!`);
 
@@ -112,11 +110,10 @@ const Edit_worker = () => {
     const newCat = input.value.trim();
 
     try {
-    const { data } = await axios.patch(
-      "https://karigarbackend.vercel.app/api/v1/worker/update-categories",
+    const { data } = await api.patch(
+      "/api/v1/worker/update-categories",
       { newCategory: newCat },
-      {  headers: { Authorization: `Bearer ${token}` },
-      withCredentials: true,}
+      {  headers: { Authorization: `Bearer ${token}` } }
     );
 
     setWorkingCategory(data.data.workingCategory); // updated from backend

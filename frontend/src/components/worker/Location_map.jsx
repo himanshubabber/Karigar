@@ -27,7 +27,7 @@ import { FiMapPin } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { useServiceReq } from "../../Context/Service_req_context.jsx";
 import {useWorker} from "../../Context/Worker_context.jsx"
-import axios from "axios";
+import api from "../../api.js";
 import Otp_timer from "../general/Otp_timer.jsx";
 
 
@@ -192,14 +192,13 @@ const Location_map = () => {
     if (!otp) return alert("Please enter OTP");
   
     try {
-      const res = await axios.post(
-        `https://karigarbackend.vercel.app/api/v1/worker/verify-otp`, // Adjust base path if needed
+      const res = await api.post(
+        `/api/v1/worker/verify-otp`, // Adjust base path if needed
         {
           serviceRequestId: order._id,
           otp: otp
         },
-        { headers: { Authorization: `Bearer ${token}` },
-        withCredentials: true, }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
   
       alert("OTP verified! Job marked as completed.");
@@ -216,11 +215,9 @@ const Location_map = () => {
           const { latitude, longitude } = pos.coords;
           console.log(pos);
           try {
-            await axios.post("https://karigarbackend.vercel.app/api/v1/worker/update-location", {
+            await api.post("/api/v1/worker/update-location", {
               coordinates: [longitude, latitude],
-            },
-            { withCredentials: true },
-          );
+            });
           } catch (err) {
             console.error("Location update failed", err);
           }
@@ -238,8 +235,8 @@ const Location_map = () => {
    
   
     try {
-      const response = await axios.post(
-        "https://karigarbackend.vercel.app/api/v1/serviceRequest/update-job-status",
+      const response = await api.post(
+        "/api/v1/serviceRequest/update-job-status",
         { serviceRequestId, newStatus },
       );
       return response.data;
@@ -255,11 +252,10 @@ const Location_map = () => {
     }
    
     try {
-      const res = await axios.patch(
-        `https://karigarbackend.vercel.app/api/v1/serviceRequest/${order._id}/set-quote-amount`,
+      const res = await api.patch(
+        `/api/v1/serviceRequest/${order._id}/set-quote-amount`,
         { quoteAmount },
-        {headers: { Authorization: `Bearer ${token}` },
-        withCredentials: true, }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
       const updatedData = await updateJobStatus(order._id,"repairAmountQuoted");
     setQuoteMessage("✅ Quote submitted successfully");
@@ -272,8 +268,8 @@ const Location_map = () => {
   const serviceRequestId = order?._id || localStorage.getItem("serviceRequestId");
   useEffect(() => {
     if (serviceRequestId) {
-      axios
-        .post("https://karigarbackend.vercel.app/api/v1/serviceRequest/get-service-details", { serviceRequestId })
+      api
+        .post("/api/v1/serviceRequest/get-service-details", { serviceRequestId })
         .then((response) => {
           const resData = response.data?.data;
           const {
@@ -306,8 +302,8 @@ const Location_map = () => {
 
   const HandleCustomerNotResponding = async () => {
     try {
-      const res=await axios.post(
-        `https://karigarbackend.vercel.app/api/v1/serviceRequest/${serviceRequestId}/cancelled-by-worker-as-customer-not-responding`,
+      const res = await api.post(
+        `/api/v1/serviceRequest/${serviceRequestId}/cancelled-by-worker-as-customer-not-responding`,
         { distance: distanceInfo.distance }, // Example distance
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -323,9 +319,8 @@ const Location_map = () => {
 
   const HandleDontWantToProceed = async () => {
     try {
-      await axios.post(
-        `https://karigarbackend.vercel.app/api/v1/serviceRequest/${serviceRequestId}/cancelled-by-worker-as-not-able-to-serve`
-,
+      await api.post(
+        `/api/v1/serviceRequest/${serviceRequestId}/cancelled-by-worker-as-not-able-to-serve`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );

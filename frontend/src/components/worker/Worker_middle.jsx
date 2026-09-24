@@ -4,7 +4,7 @@ import { FaWallet, FaStar, FaCalendarAlt } from "react-icons/fa";
 import { IoIosInformationCircle } from "react-icons/io";
 import { FiLogOut } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from "../../api.js";
 import { useState } from "react";
 import { useWorker } from "../../Context/Worker_context";
 
@@ -57,8 +57,8 @@ const Worker_middle = ({ isOnline, setIsOnline, worker }) => {
           console.error("No worker ID found in localStorage");
           return;
         }
-        const res = await axios.post(
-          "https://karigarbackend.vercel.app/api/v1/worker/worker-info",
+        const res = await api.post(
+          "/api/v1/worker/worker-info",
           { _id: workerId }
         );
         SetNewWorker(res.data.data);
@@ -78,11 +78,9 @@ const Worker_middle = ({ isOnline, setIsOnline, worker }) => {
           const { latitude, longitude } = pos.coords;
           console.log(pos);
           try {
-            await axios.post("https://karigarbackend.vercel.app/api/v1/worker/update-location", {
+            await api.post("/api/v1/worker/update-location", {
               coordinates: [longitude, latitude],
-            },
-            { withCredentials: true },
-          );
+            });
           } catch (err) {
             console.error("Location update failed", err);
           }
@@ -100,9 +98,8 @@ const Worker_middle = ({ isOnline, setIsOnline, worker }) => {
 
   const handleLogout = async () => {
     try {
-      const res = await axios.post("https://karigarbackend.vercel.app/api/v1/worker/logout", null, {
+      const res = await api.post("/api/v1/worker/logout", null, {
         headers: { Authorization: `Bearer ${token}` },
-        withCredentials: true,
       });
 
       console.log(res);

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
+import api from "../../api.js";
 import { useNavigate } from "react-router-dom";
 import Spinner from "../../components/Style/Spinner.jsx";
 
@@ -103,8 +103,7 @@ const Signup_worker = () => {
         formData.append("profilePhoto", profilePhoto);
       }
       setLoading(true);
-      const res = await axios.post("https://karigarbackend.vercel.app/api/v1/worker/register", formData, {
-        withCredentials: true,
+      const res = await api.post("/api/v1/worker/register", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },

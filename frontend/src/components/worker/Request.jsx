@@ -1,7 +1,7 @@
 import React, { useState ,useEffect} from "react";
 import { useNavigate } from "react-router-dom";
 import { useServiceReq } from "../../Context/Service_req_context";
-import axios from "axios";
+import api from "../../api.js";
 import { FaMapMarkerAlt, FaUser, FaWrench, FaRupeeSign } from "react-icons/fa";
 import Spinner from "../../components/Style/Spinner.jsx"
 import {useWorker} from "../../Context/Worker_context.jsx"
@@ -59,22 +59,20 @@ const Request = ({ request }) => {
       async (position) => {
         const { latitude, longitude } = position.coords;
         try {
-          await axios.post(
-            "https://karigarbackend.vercel.app/api/v1/serviceRequest/accept",
+          await api.post(
+            "/api/v1/serviceRequest/accept",
             { 
               serviceRequestId: _id,
               coordinates: [longitude, latitude],
             },
             { 
              headers: { Authorization: `Bearer ${token}` },
-            withCredentials: true,
             }
           );
 
-          const fullDetails = await axios.post(
-            "https://karigarbackend.vercel.app/api/v1/serviceRequest/get-service-details",
-            { serviceRequestId: _id },
-            { withCredentials: true }
+          const fullDetails = await api.post(
+            "/api/v1/serviceRequest/get-service-details",
+            { serviceRequestId: _id }
           );
 
           const fetchedRequest = fullDetails?.data?.data?.serviceRequest;

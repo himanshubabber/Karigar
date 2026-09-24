@@ -31,7 +31,7 @@ import { useServiceReq } from "../../Context/Service_req_context.jsx";
 import { useCustomer } from "../../Context/Customer_context.jsx";
 import { useWorker } from "../../Context/Worker_context.jsx";
 import { useOtp } from "../../Context/Otp_context.jsx";
-import axios from "axios";
+import api from "../../api.js";
 
 const sourceIcon = L.icon({
   iconUrl: "https://cdn-icons-png.flaticon.com/512/2202/2202112.png",
@@ -116,8 +116,8 @@ const Location_map_user = () => {
 
   useEffect(() => {
     if (serviceRequestId) {
-      axios
-        .post("https://karigarbackend.vercel.app/api/v1/serviceRequest/get-service-details", { serviceRequestId })
+      api
+        .post("/api/v1/serviceRequest/get-service-details", { serviceRequestId })
         .then((response) => {
           const resData = response.data?.data;
           const {
@@ -184,8 +184,8 @@ const Location_map_user = () => {
 
     try {
       console.log({serviceRequestId})
-      const { data } = await axios.post(
-         `https://karigarbackend.vercel.app/api/v1/payment/${serviceRequestId}/create-order`,
+      const { data } = await api.post(
+         `/api/v1/payment/${serviceRequestId}/create-order`,
          {
           amount: ser.visitingCharge+ser.quoteAmount, 
           currency: "INR"
@@ -205,16 +205,16 @@ const Location_map_user = () => {
             razorpay_signature: response.razorpay_signature,
           };
           try {
-            await axios.post(
-              `https://karigarbackend.vercel.app/api/v1/payment/${serviceRequestId}/verify-payment`, options);
+            await api.post(
+              `/api/v1/payment/${serviceRequestId}/verify-payment`, options);
             alert("Payment successful!");
           } catch {
             alert("Payment verification failed.");
           }
         },
       };
-      await axios.post(
-        "https://karigarbackend.vercel.app/api/v1/serviceRequest/update-job-status",
+      await api.post(
+        "/api/v1/serviceRequest/update-job-status",
         { serviceRequestId, newStatus: "accepted" },
         {
           headers: {
@@ -299,8 +299,8 @@ const Location_map_user = () => {
   const handleOnPayment = async () => {
     console.log(token);
     try {
-      const response = await axios.put(
-        "http://localhost:8000/api/v1/serviceRequest/mark-payment",
+      const response = await api.put(
+        "/api/v1/serviceRequest/mark-payment",
         {
           serviceRequestId: ser._id,
           Authorization: `Bearer ${token}`,
@@ -310,7 +310,6 @@ const Location_map_user = () => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-          withCredentials: true,
         }
       );
       console.log("✅ Payment status updated:", response.data);
@@ -325,8 +324,8 @@ const Location_map_user = () => {
 
   const updateJobStatus = async (serviceRequestId, newStatus, token) => {
     try {
-      const response = await axios.post(
-        "https://karigarbackend.vercel.app/api/v1/serviceRequest/update-job-status",
+      const response = await api.post(
+        "/api/v1/serviceRequest/update-job-status",
         { serviceRequestId, newStatus },
         {
           headers: {
