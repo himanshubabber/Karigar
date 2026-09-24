@@ -17,6 +17,7 @@ import {
     verifyOtpForService,
     getWorkerById,
     rateWorker,
+    removeCategory,
 } from "../controllers/worker.controller.js";
 import {upload} from "../middlewares/multer.middleware.js"
 import {verifyJWT} from "../middlewares/workerAuth.middleware.js"
@@ -32,6 +33,7 @@ router.route("/refresh-token").post(refreshAccessToken)
 router.route("/change-password").post(verifyJWT, changeCurrentPassword)
 router.route("/current-user").get(verifyJWT, getCurrentWorker)
 router.patch("/update-categories", verifyJWT,  updateCategory);
+router.patch("/remove-category", verifyJWT, removeCategory);
 router.route("/update-profile-photo").patch(verifyJWT, upload.single("profilePhoto"), updateProfilePhoto)
 router.route("/update-email").patch(verifyJWT, updateEmail)
 router.route("/update-phone").patch(verifyJWT, updatePhone)
