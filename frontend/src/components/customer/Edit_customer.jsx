@@ -93,12 +93,12 @@ const Edit_customer = () => {
   };
 
   return (
-    <div className="container mt-5">
+    <div className="container-fluid container-md py-3 py-sm-4 px-2 px-sm-3">
       <div
-        className="card shadow p-4 rounded-xl p-4 bg-white shadow-lg"
-        style={{ maxWidth: "600px", margin: "0 auto", borderRadius: "16px" }}
+        className="card shadow-sm p-3 p-sm-4 border-0 w-100"
+        style={{ maxWidth: "600px", margin: "0 auto", borderRadius: "16px", backgroundColor: "#ffffff" }}
       >
-        <h3 className="text-center mb-4">Edit Customer Profile</h3>
+        <h3 className="text-center mb-4 fw-bold text-dark">Edit Customer Profile</h3>
 
         {/* Profile Photo Section */}
         <div className="text-center mb-4">
@@ -159,10 +159,11 @@ const Edit_customer = () => {
             </div>
           ))}
 
-          <div className="text-end mt-4">
+          <div className="d-flex justify-content-end mt-4">
             <button
               type="button"
-              className="btn btn-primary"
+              className="btn btn-primary w-100 w-sm-auto px-4 py-2 fw-semibold rounded-pill"
+              style={{ minHeight: "44px" }}
               onClick={() => navigate("/customer")}
             >
               Go to Profile

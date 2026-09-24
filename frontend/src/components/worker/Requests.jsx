@@ -291,14 +291,14 @@ const Requests = () => {
   const hasActiveFilters = Boolean(selectedCategory || radiusFilter || quoteFilter);
 
   return (
-    <div className="container py-4 d-flex flex-column align-items-center">
-      <h3 className="mb-4 text-center fw-bold text-dark">Service Requests</h3>
+    <div className="container-fluid container-md py-3 py-sm-4 px-2 px-sm-3 d-flex flex-column align-items-center">
+      <h3 className="mb-3 mb-sm-4 text-center fw-bold text-dark">Service Requests</h3>
 
       {/* Main Content Wrapper - Centered */}
       <div className="w-100" style={{ maxWidth: "860px", margin: "0 auto" }}>
         {/* Filters Bar Card */}
         <div
-          className="card shadow-sm p-4 mb-4 border-0"
+          className="card shadow-sm p-3 p-sm-4 mb-4 border-0"
           style={{
             borderRadius: "14px",
             backgroundColor: "#ffffff",

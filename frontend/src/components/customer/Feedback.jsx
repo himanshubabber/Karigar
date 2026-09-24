@@ -65,7 +65,8 @@ const Feedback = ({ serviceRequestId, onSubmit }) => {
       {error && <p className="text-danger">{error}</p>}
 
       <button
-        className="btn btn-primary px-4 py-2"
+        className="btn btn-primary px-4 py-2 fw-semibold rounded-pill"
+        style={{ minHeight: "44px" }}
         onClick={handleSubmit}
         disabled={loading}
       >

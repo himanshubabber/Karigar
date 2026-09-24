@@ -449,9 +449,9 @@ useEffect(() => {
 
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "20px" }}>
-      <div style={{ width: "80%", maxWidth: "1200px" }}>
-        <div style={{ width: "100%", marginBottom: "20px" }}>
+    <div className="container-fluid container-xl py-3 px-2 px-sm-3">
+      <div className="w-100" style={{ maxWidth: "1200px", margin: "0 auto" }}>
+        <div className="w-100 mb-3">
           {destination && ser.orderStatus!=="completed"
           &&
 ser.orderStatus !== ''
@@ -460,7 +460,7 @@ ser.orderStatus !== ''
               center={userPosition}
               zoom={13}
               style={{
-                height: "500px",
+                height: "420px",
                 width: "100%",
                 borderRadius: "12px",
                 boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
@@ -482,10 +482,11 @@ ser.orderStatus !== ''
           )}
         </div>
 
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "20px", justifyContent: "space-between" }}>
+        <div className="row g-3">
           {/* Request Info */}
-          <div className="card p-4" style={{ flex: "1", minWidth: "280px" }}>
-            <h4>Request Info</h4>
+          <div className="col-12 col-md-6 col-lg-4">
+            <div className="card shadow-sm p-3 p-sm-4 border-0 h-100" style={{ borderRadius: "12px", backgroundColor: "#ffffff" }}>
+              <h4 className="fw-bold fs-5 mb-3 text-dark">Request Info</h4>
             <p><CgProfile /> <b>Name:</b> {customer?.fullName || "N/A"}</p>
             <p><FaHammer /> <b>Category:</b> {ser?.category || "N/A"}</p>
             <p><MdOutlineDescription /> <b>Description:</b> {ser?.description || "N/A"}</p>
@@ -501,9 +502,11 @@ ser.orderStatus !== ''
               <p className="text-muted">No audio note provided.</p>
             )}
           </div>
+        </div>
 
           {/* Cancel & Payment */}
-          <div className="card p-4 text-center" style={{ flex: "1", minWidth: "280px" }}>
+          <div className="col-12 col-md-6 col-lg-4">
+            <div className="card shadow-sm p-3 p-sm-4 text-center border-0 h-100" style={{ borderRadius: "12px", backgroundColor: "#ffffff" }}>
 
 
           {ser.orderStatus === "cancelled" && (
@@ -657,37 +660,36 @@ ser.visitingCharge+ser.quoteAmount}</h5>
   </div>
 </div>
           </div>
+        </div>
 
           {/* Worker Info */}
-          <div className="card p-4" style={{ flex: "1", minWidth: "280px" }}>
-            <h4>Worker Info</h4>
-            <p><CgProfile /> <b>Name:</b> {worker?.fullName || "N/A"}</p>
-            <p>
-  <FaStar /> <b>Rating:</b> {typeof worker?.rating === "number" ? worker.rating.toFixed(2) : "N/A"}
-</p>
-            <p><MdOutlineAccessTimeFilled /> <b>Experience:</b> {worker?.yearOfExperience || "N/A"} yrs</p>
-            <p><MdVerifiedUser /> <b>Verified:</b> {worker?.isVerified ? "✅ Yes" : "❌ No"}</p>
-            <p><b>Status:</b> {worker?.workerLocation ? "🟢 Online" : "🔴 Offline"}</p>
-           {
-           console.log("worker coord",worker?.workerLocation
-           )
-           }
-            <div className="d-flex flex-wrap gap-2 mt-2">
-              {worker?.workingCategory?.map((cat, idx) => (
-                <span
-                  key={idx}
-                  className="badge bg-primary text-light"
-                  style={{
-                    textTransform: "capitalize",
-                    fontSize: "1.1rem",
-                    padding: "0.5rem 1rem",
-                    borderRadius: "14px",
-                    fontWeight: "600",
-                  }}
-                >
-                  {cat}
-                </span>
-              ))}
+          <div className="col-12 col-md-12 col-lg-4">
+            <div className="card shadow-sm p-3 p-sm-4 border-0 h-100" style={{ borderRadius: "12px", backgroundColor: "#ffffff" }}>
+              <h4 className="fw-bold fs-5 mb-3 text-dark">Worker Info</h4>
+              <p className="mb-2 text-break"><CgProfile className="me-1 text-secondary" /> <b>Name:</b> {worker?.fullName || "N/A"}</p>
+              <p className="mb-2">
+                <FaStar className="me-1 text-warning" /> <b>Rating:</b> {typeof worker?.rating === "number" ? worker.rating.toFixed(2) : "N/A"}
+              </p>
+              <p className="mb-2"><MdOutlineAccessTimeFilled className="me-1 text-secondary" /> <b>Experience:</b> {worker?.yearOfExperience || "N/A"} yrs</p>
+              <p className="mb-2"><MdVerifiedUser className="me-1 text-primary" /> <b>Verified:</b> {worker?.isVerified ? "✅ Yes" : "❌ No"}</p>
+              <p className="mb-2"><b>Status:</b> {worker?.workerLocation ? "🟢 Online" : "🔴 Offline"}</p>
+              <div className="d-flex flex-wrap gap-2 mt-3">
+                {worker?.workingCategory?.map((cat, idx) => (
+                  <span
+                    key={idx}
+                    className="badge bg-primary-subtle text-primary border border-primary-subtle"
+                    style={{
+                      textTransform: "capitalize",
+                      fontSize: "0.85rem",
+                      padding: "0.4rem 0.8rem",
+                      borderRadius: "10px",
+                      fontWeight: "600",
+                    }}
+                  >
+                    {cat}
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
         </div>

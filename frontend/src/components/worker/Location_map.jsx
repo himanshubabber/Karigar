@@ -334,33 +334,30 @@ const Location_map = () => {
 
 
   return (
-    <div style={{ display: "flex", padding: "20px", gap: "20px", flexWrap: "nowrap", fontFamily: "Segoe UI, sans-serif" }}>
-      {/* Left Panel */}
-      <div style={{ minWidth: "320px", maxWidth: "420px" }}>
-        {!isLocated && 
-        <button
-          onClick={startTracking}
-          style={{
-            padding: "12px 20px",
-            fontWeight: "bold",
-            marginBottom: "18px",
-            borderRadius: "8px",
-            backgroundColor: "#007bff",
-            color: "#fff",
-            border: "none",
-            boxShadow: "0 3px 6px rgba(0,0,0,0.1)",
-            width: "100%",
-          }}
-        >
-          Locate Customer
-          {setisLocated(true)}
-          {setTrack(true)}
-        </button>
-}
+    <div className="container-fluid py-3 px-2 px-sm-3" style={{ fontFamily: "Segoe UI, sans-serif" }}>
+      <div className="row g-3">
+        {/* Left Panel */}
+        <div className="col-12 col-lg-4 col-xl-3 order-2 order-lg-1">
+          {!isLocated && 
+          <button
+            onClick={startTracking}
+            className="btn btn-primary w-100 fw-bold py-2 mb-3 shadow-sm rounded-pill"
+            style={{ minHeight: "44px" }}
+          >
+            Locate Customer
+            {setisLocated(true)}
+            {setTrack(true)}
+          </button>
+          }
 
-        <div className="card" style={{ padding: "20px", 
-          maxWidth:"420px",
-          borderRadius: "12px", background: "#f8f9fa", boxShadow: "0 4px 10px rgba(0,0,0,0.08)" }}>
+          <div
+            className="card p-3 p-sm-4 shadow-sm border-0"
+            style={{
+              borderRadius: "12px",
+              background: "#ffffff",
+              boxShadow: "0 4px 10px rgba(0,0,0,0.06)",
+            }}
+          >
           <h5 className="fw-bold mb-3" style={{ fontSize: "1.2rem" }}>
             <GiMultiDirections size={26} className="me-2 text-black" />
             Navigation Info
@@ -477,52 +474,91 @@ const Location_map = () => {
         </div>
       </div>
 
-      {/* Map */}
-      <div style={{ flexGrow: 1, height: "520px", minWidth: "550px", borderRadius: "12px", boxShadow: "0 3px 10px rgba(0,0,0,0.1)", overflow: "hidden" }}>
-        <MapContainer center={mapCenter} zoom={13} style={{ height: "100%", width: "100%" }}>
-          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-          {userPosition && destination && (
-            <>
-              <Marker position={destination} icon={manIcon}>
-                <Popup>📍 Customer Location</Popup>
-              </Marker>
-              <Marker position={userPosition} icon={sourceIcon}>
-                <Popup>👷‍♂️ Your Current Location</Popup>
-              </Marker>
-              <Routing from={userPosition} to={destination} />
-            </>
-          )}
-        </MapContainer>
-      </div>
-      {console.log("order is:",order)}
-      {/* Right Info Card */}
-      <div className="card" style={{ minWidth: "320px", maxWidth: "350px", padding: "20px", borderRadius: "12px", background: "#fefefe", boxShadow: "0 4px 10px rgba(0,0,0,0.1)", height: "fit-content" }}>
-        <h5 className="fw-bold mb-3" style={{ fontSize: "1.2rem", color: "#343a40", borderBottom: "1px solid #ccc", paddingBottom: "10px", marginBottom: "20px" }}>
-          <IoIosInformationCircle size={26} className="me-2 text-black" />
-          Customer Request Info
-        </h5>
-        <div style={{ lineHeight: "1.8", fontSize: "15px", color: "#212529" }}>
-          <p></p>
-          <p><strong><CgProfile size={20} /> Name:</strong> {customer.fullName || "N/A"}</p>
-          <p><strong>📧 Email:</strong> {customer.email || "N/A"}</p>
-          <p><strong>📞 Phone:</strong> {customer.phone || "N/A"}</p>
-          {/* <p><strong>🏠 Address:</strong> {customer.address || "N/A"}</p> */}
-          <p><strong><FaHammer size={20} /> Category:</strong> {order.category}</p>
-          <p><strong><MdOutlineDescription size={20} /> Description:</strong> {order.description}</p>
-          <p><strong><MdNetworkWifi size={20} /> Job Status:</strong> <span style={{ color: "#ffc107" }}>{order.jobStatus}</span></p>
-          {order?.paymentStatus==='paid' &&
-          <p><strong><RiMoneyDollarCircleFill size={20} /> Payment:</strong> <span 
-           style={{ color: "green" }}
-          >{order.paymentStatus}</span></p>
-          }
-          { order?.paymentStatus!=="paid" &&
-          <p><strong><RiMoneyDollarCircleFill size={20} /> Payment:</strong> <span 
-           style={{ color: "#dc3545" }}
-          >{order.paymentStatus}</span></p>
-        }
-          {/* <p><strong><MdOutlineAccessTimeFilled size={20} /> Created:</strong> {new Date(order.createdAt).toLocaleString()}</p> */}
-          <p><strong><AiTwotoneAudio size={20} /> Audio Note:</strong></p>
-          <audio controls src={order.audioNoteUrl} style={{ width: "100%", marginTop: "6px" }} />
+        {/* Center Map */}
+        <div className="col-12 col-lg-5 col-xl-6 order-1 order-lg-2">
+          <div
+            style={{
+              height: "460px",
+              width: "100%",
+              borderRadius: "12px",
+              boxShadow: "0 3px 10px rgba(0,0,0,0.1)",
+              overflow: "hidden",
+            }}
+          >
+            <MapContainer center={mapCenter} zoom={13} style={{ height: "100%", width: "100%" }}>
+              <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+              {userPosition && destination && (
+                <>
+                  <Marker position={destination} icon={manIcon}>
+                    <Popup>📍 Customer Location</Popup>
+                  </Marker>
+                  <Marker position={userPosition} icon={sourceIcon}>
+                    <Popup>👷‍♂️ Your Current Location</Popup>
+                  </Marker>
+                  <Routing from={userPosition} to={destination} />
+                </>
+              )}
+            </MapContainer>
+          </div>
+        </div>
+
+        {/* Right Info Card */}
+        <div className="col-12 col-lg-3 col-xl-3 order-3">
+          <div
+            className="card p-3 p-sm-4 shadow-sm border-0 h-100"
+            style={{
+              borderRadius: "12px",
+              background: "#ffffff",
+              boxShadow: "0 4px 10px rgba(0,0,0,0.06)",
+            }}
+          >
+            <h5
+              className="fw-bold mb-3 d-flex align-items-center text-dark"
+              style={{
+                fontSize: "1.1rem",
+                borderBottom: "1px solid #eee",
+                paddingBottom: "10px",
+              }}
+            >
+              <IoIosInformationCircle size={24} className="me-2 text-primary" />
+              Customer Request Info
+            </h5>
+            <div style={{ lineHeight: "1.8", fontSize: "14px", color: "#212529" }}>
+              <p className="mb-2 text-break">
+                <strong><CgProfile size={18} className="me-1 text-secondary" /> Name:</strong> {customer.fullName || "N/A"}
+              </p>
+              <p className="mb-2 text-break">
+                <strong>📧 Email:</strong> {customer.email || "N/A"}
+              </p>
+              <p className="mb-2 text-break">
+                <strong>📞 Phone:</strong> {customer.phone || "N/A"}
+              </p>
+              <p className="mb-2 text-break">
+                <strong><FaHammer size={18} className="me-1 text-secondary" /> Category:</strong> {order.category}
+              </p>
+              <p className="mb-2 text-break">
+                <strong><MdOutlineDescription size={18} className="me-1 text-secondary" /> Description:</strong> {order.description}
+              </p>
+              <p className="mb-2">
+                <strong><MdNetworkWifi size={18} className="me-1 text-secondary" /> Job Status:</strong>{" "}
+                <span className="badge bg-warning-subtle text-dark">{order.jobStatus}</span>
+              </p>
+              <p className="mb-2">
+                <strong><RiMoneyDollarCircleFill size={18} className="me-1 text-secondary" /> Payment:</strong>{" "}
+                <span className={`badge ${order?.paymentStatus === 'paid' ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger'}`}>
+                  {order.paymentStatus || "pending"}
+                </span>
+              </p>
+              {order.audioNoteUrl && (
+                <>
+                  <p className="mb-1">
+                    <strong><AiTwotoneAudio size={18} className="me-1 text-secondary" /> Audio Note:</strong>
+                  </p>
+                  <audio controls src={order.audioNoteUrl} className="w-100 mt-1" />
+                </>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>

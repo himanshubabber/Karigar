@@ -127,9 +127,9 @@ const Signup_worker = () => {
   };
 
   return (
-    <div className="d-flex justify-content-center align-items-center vh-100 bg-light">
-      <div className="card shadow p-4" style={{ width: "32rem" }}>
-        <h4 className="text-center mb-4">Worker Signup</h4>
+    <div className="d-flex justify-content-center align-items-center min-vh-100 py-4 py-sm-5 px-3 bg-light">
+      <div className="card shadow-sm p-3 p-sm-4 border-0 w-100 my-auto" style={{ maxWidth: "32rem", borderRadius: "14px", backgroundColor: "#ffffff" }}>
+        <h4 className="text-center mb-4 fw-bold text-dark">Worker Signup</h4>
         <form onSubmit={handleSignup} encType="multipart/form-data">
           {["fullName", "email", "password", "phone", "address"].map((field) => (
             <div className="mb-3" key={field}>
@@ -210,7 +210,11 @@ const Signup_worker = () => {
             )}
           </div>
 
-          <button type="submit" className="btn btn-primary w-100 mt-3">
+          <button
+            type="submit"
+            className="btn btn-primary w-100 fw-semibold py-2 mt-3"
+            style={{ minHeight: "44px", borderRadius: "8px" }}
+          >
             Sign Up
           </button>
         </form>

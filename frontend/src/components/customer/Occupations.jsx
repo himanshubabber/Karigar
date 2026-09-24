@@ -78,28 +78,36 @@ const Occupations = () => {
   }, [customer, navigate]);
 
   return (
-    <div className="container my-5">
+    <div className="container-fluid container-md py-3 py-sm-4 px-2 px-sm-3">
       {/* Customer Info Card */}
-      <div className="card mb-4 shadow p-4 position-relative" style={{ borderRadius: "14px" }}>
-        {/* Edit Icon */}
-        <MdOutlineEdit
-          size={26}
-          className="position-absolute top-0 end-0 m-3 text-dark"
-          style={{ cursor: "pointer" }}
-          title="Edit Profile"
-          onClick={() => navigate("/edit_customer", { state: customer })}
-        />
+      <div
+        className="card mb-4 shadow-sm p-3 p-sm-4 border-0"
+        style={{ borderRadius: "14px", backgroundColor: "#ffffff" }}
+      >
+        {/* Header with Title & Edit Profile */}
+        <div className="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+          <span className="fw-bold text-dark fs-6">Customer Profile</span>
+          <button
+            type="button"
+            className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 rounded-pill px-3 py-1"
+            onClick={() => navigate("/edit_customer", { state: customer })}
+            title="Edit Profile"
+          >
+            <MdOutlineEdit size={18} />
+            <span>Edit Profile</span>
+          </button>
+        </div>
 
         {/* Profile Info */}
-        <div className="d-flex align-items-center mb-3">
+        <div className="d-flex flex-column flex-sm-row align-items-center align-items-sm-start text-center text-sm-start mb-3 gap-3">
           <div
             style={{
-              width: "110px",
-              height: "110px",
+              width: "100px",
+              height: "100px",
               borderRadius: "50%",
               overflow: "hidden",
-              marginRight: "20px",
-              border: "2px solid #ccc",
+              border: "3px solid #e9ecef",
+              flexShrink: 0,
             }}
           >
             <img
@@ -112,30 +120,32 @@ const Occupations = () => {
               style={{ width: "100%", height: "100%", objectFit: "cover" }}
             />
           </div>
-          <div>
-            <h4 className="fw-bold mb-1">{customer?.fullName || "Customer"}</h4>
-            <p className="mb-1 text-muted">{customer?.email || "Email not available"}</p>
-            <p className="mb-1 text-muted">{customer?.phone || "Phone not available"}</p>
-            <p className="mb-0 text-muted">{customer?.address || "Address not available"}</p>
+          <div className="w-100 overflow-hidden">
+            <h4 className="fw-bold mb-1 fs-5 text-dark text-break">{customer?.fullName || "Customer"}</h4>
+            <p className="mb-1 text-muted small text-break">{customer?.email || "Email not available"}</p>
+            <p className="mb-1 text-muted small text-break">{customer?.phone || "Phone not available"}</p>
+            <p className="mb-0 text-muted small text-break">{customer?.address || "Address not available"}</p>
           </div>
-
-          <button
-            className="btn btn-outline-primary fw-bold position-absolute bottom-0 end-0 m-3"
-            onClick={() => navigate("/history_customer")}
-            title="History"
-          >
-            History
-          </button>
         </div>
 
-        {/* Logout Button */}
-        <div className="text-end">
+        {/* Bottom Actions Row: Logout & History */}
+        <div className="d-flex justify-content-between align-items-center pt-3 border-top gap-2">
           <button
-            className="btn btn-outline-danger d-flex align-items-center gap-2 fw-bold"
+            className="btn btn-outline-danger d-flex align-items-center gap-2 fw-semibold rounded-pill px-3 py-2"
             onClick={handleLogout}
             title="Logout"
+            style={{ minHeight: "40px" }}
           >
-            <FiLogOut size={18} /> Logout
+            <FiLogOut size={17} /> Logout
+          </button>
+
+          <button
+            className="btn btn-outline-primary fw-semibold rounded-pill px-4 py-2"
+            onClick={() => navigate("/history_customer")}
+            title="History"
+            style={{ minHeight: "40px" }}
+          >
+            History
           </button>
         </div>
       </div>
@@ -143,7 +153,8 @@ const Occupations = () => {
       {/* Make Request Button */}
       <div className="text-center mb-4">
         <button
-          className="fw-bold btn btn-warning px-5 py-3"
+          className="fw-bold btn btn-warning px-4 px-sm-5 py-2 py-sm-3 shadow-sm rounded-pill w-100 w-sm-auto"
+          style={{ minHeight: "46px", fontSize: "1.05rem" }}
           onClick={() => navigate("/service_req_form")}
         >
           Make a Request
