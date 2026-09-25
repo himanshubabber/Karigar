@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import api from "../../api.js";
 import { useNavigate } from "react-router-dom";
 import { useCustomer } from "../../Context/Customer_context";
 
@@ -26,11 +26,11 @@ const Edit_customer = () => {
 
   const updateFieldAPI = async (field, value) => {
     const apiMap = {
-      fullName: "https://karigarbackend.vercel.app/api/v1/customer/update-fullName",
-      email: "https://karigarbackend.vercel.app/api/v1/customer/update-email",
-      phone: "https://karigarbackend.vercel.app/api/v1/customer/update-phone",
-      address: "https://karigarbackend.vercel.app/api/v1/customer/update-address",
-      profilePhoto: "https://karigarbackend.vercel.app/api/v1/customer/update-profile-photo",
+      fullName: "/api/v1/customer/update-fullName",
+      email: "/api/v1/customer/update-email",
+      phone: "/api/v1/customer/update-phone",
+      address: "/api/v1/customer/update-address",
+      profilePhoto: "/api/v1/customer/update-profile-photo",
     };
 
     try {
@@ -38,9 +38,8 @@ const Edit_customer = () => {
         const formData = new FormData();
         formData.append("profilePhoto", value);
 
-        const { data } = await axios.patch(apiMap[field], formData, {
+        const { data } = await api.patch(apiMap[field], formData, {
           headers: { Authorization: `Bearer ${token}` },
-          withCredentials: true,
         });
 
         setCustomer(data.data);
@@ -48,9 +47,7 @@ const Edit_customer = () => {
         setProfilePhoto(data.data.profilePhoto);
         alert("Profile photo updated successfully!");
       } else {
-        await axios.patch(apiMap[field], { [field]: value }, {  headers: { Authorization: `Bearer ${token}` },
-          withCredentials: true,
-         });
+        await api.patch(apiMap[field], { [field]: value }, {  headers: { Authorization: `Bearer ${token}` } });
 
         const updatedCustomer = { ...customer, [field]: value };
         setCustomer(updatedCustomer);
@@ -96,12 +93,12 @@ const Edit_customer = () => {
   };
 
   return (
-    <div className="container mt-5">
+    <div className="container-fluid container-md py-3 py-sm-4 px-2 px-sm-3">
       <div
-        className="card shadow p-4 rounded-xl p-4 bg-white shadow-lg"
-        style={{ maxWidth: "600px", margin: "0 auto", borderRadius: "16px" }}
+        className="card shadow-sm p-3 p-sm-4 border-0 w-100"
+        style={{ maxWidth: "600px", margin: "0 auto", borderRadius: "16px", backgroundColor: "#ffffff" }}
       >
-        <h3 className="text-center mb-4">Edit Customer Profile</h3>
+        <h3 className="text-center mb-4 fw-bold text-dark">Edit Customer Profile</h3>
 
         {/* Profile Photo Section */}
         <div className="text-center mb-4">
@@ -162,10 +159,11 @@ const Edit_customer = () => {
             </div>
           ))}
 
-          <div className="text-end mt-4">
+          <div className="d-flex justify-content-end mt-4">
             <button
               type="button"
-              className="btn btn-primary"
+              className="btn btn-primary w-100 w-sm-auto px-4 py-2 fw-semibold rounded-pill"
+              style={{ minHeight: "44px" }}
               onClick={() => navigate("/customer")}
             >
               Go to Profile

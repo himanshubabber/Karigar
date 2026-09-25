@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
+import api from "../../api.js";
 import { useNavigate } from "react-router-dom";
 import Spinner from "../../components/Style/Spinner.jsx"
 
@@ -52,8 +52,7 @@ const Signup_customer = () => {
         formData.append("profilePhoto", profilePhoto);
       }
       setLoading(true);
-      const res = await axios.post("https://karigarbackend.vercel.app/api/v1/customer/register", formData, {
-        withCredentials: true,
+      const res = await api.post("/api/v1/customer/register", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
@@ -72,14 +71,14 @@ const Signup_customer = () => {
   };
 
   return (
-    <div className="d-flex justify-content-center align-items-center vh-100 bg-light">
-      <div className="card shadow" style={{ width: "28rem" }}>
-        <div className="card-body">
-          <h4 className="text-center mb-4">Customer Signup</h4>
+    <div className="d-flex justify-content-center align-items-center min-vh-100 py-4 py-sm-5 px-3 bg-light">
+      <div className="card shadow-sm border-0 w-100 my-auto" style={{ maxWidth: "28rem", borderRadius: "14px", backgroundColor: "#ffffff" }}>
+        <div className="card-body p-3 p-sm-4">
+          <h4 className="text-center mb-4 fw-bold text-dark">Customer Signup</h4>
           <form onSubmit={handleSignup} encType="multipart/form-data">
             {["fullName", "email", "phone", "address", "password"].map((field) => (
               <div className="mb-3" key={field}>
-                <label className="form-label">
+                <label className="form-label fw-semibold">
                   {field.charAt(0).toUpperCase() + field.slice(1)}
                 </label>
                 <input
@@ -96,7 +95,7 @@ const Signup_customer = () => {
 
             {/* Profile Photo Upload */}
             <div className="mb-3">
-              <label className="form-label">Profile Photo (optional)</label>
+              <label className="form-label fw-semibold">Profile Photo (optional)</label>
               <input
                 type="file"
                 accept="image/*"
@@ -118,7 +117,11 @@ const Signup_customer = () => {
               )}
             </div>
 
-            <button type="submit" className="btn btn-primary w-100 mt-3">
+            <button
+              type="submit"
+              className="btn btn-primary w-100 fw-semibold py-2 mt-3"
+              style={{ minHeight: "44px", borderRadius: "8px" }}
+            >
               Sign Up
             </button>
           </form>

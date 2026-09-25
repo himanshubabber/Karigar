@@ -4,7 +4,7 @@ import { FaWallet, FaStar, FaCalendarAlt } from "react-icons/fa";
 import { IoIosInformationCircle } from "react-icons/io";
 import { FiLogOut } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from "../../api.js";
 import { useState } from "react";
 import { useWorker } from "../../Context/Worker_context";
 
@@ -57,8 +57,8 @@ const Worker_middle = ({ isOnline, setIsOnline, worker }) => {
           console.error("No worker ID found in localStorage");
           return;
         }
-        const res = await axios.post(
-          "https://karigarbackend.vercel.app/api/v1/worker/worker-info",
+        const res = await api.post(
+          "/api/v1/worker/worker-info",
           { _id: workerId }
         );
         SetNewWorker(res.data.data);
@@ -78,11 +78,9 @@ const Worker_middle = ({ isOnline, setIsOnline, worker }) => {
           const { latitude, longitude } = pos.coords;
           console.log(pos);
           try {
-            await axios.post("https://karigarbackend.vercel.app/api/v1/worker/update-location", {
+            await api.post("/api/v1/worker/update-location", {
               coordinates: [longitude, latitude],
-            },
-            { withCredentials: true },
-          );
+            });
           } catch (err) {
             console.error("Location update failed", err);
           }
@@ -100,9 +98,8 @@ const Worker_middle = ({ isOnline, setIsOnline, worker }) => {
 
   const handleLogout = async () => {
     try {
-      const res = await axios.post("https://karigarbackend.vercel.app/api/v1/worker/logout", null, {
+      const res = await api.post("/api/v1/worker/logout", null, {
         headers: { Authorization: `Bearer ${token}` },
-        withCredentials: true,
       });
 
       console.log(res);
@@ -133,38 +130,42 @@ const Worker_middle = ({ isOnline, setIsOnline, worker }) => {
   }
 
   return (
-    <div className="container mt-4">
-      <div className="row align-items-stretch">
+    <div className="container-fluid container-md py-3 py-sm-4 px-2 px-sm-3">
+      <div className="row g-3 g-md-4 align-items-stretch">
         {/* Left Card */}
-        <div className="col-md-8 mb-3">
+        <div className="col-12 col-md-8">
           <div
-            className="card p-4 shadow h-100 position-relative d-flex flex-column"
-            style={{ borderRadius: "14px" }}
+            className="card p-3 p-sm-4 shadow-sm h-100 border-0 d-flex flex-column"
+            style={{ borderRadius: "14px", backgroundColor: "#ffffff" }}
           >
-            <div className="position-absolute top-0 end-0 p-3 d-flex flex-column align-items-end">
+            {/* Top Bar with Online Badge & Edit Profile */}
+            <div className="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
               <span
-                className={`badge ${isOnline ? "bg-success" : "bg-danger"} fs-5 px-3 py-2 rounded-pill`}
+                className={`badge ${isOnline ? "bg-success" : "bg-danger"} fs-6 px-3 py-2 rounded-pill`}
               >
                 {isOnline ? "Online" : "Offline"}
               </span>
-              <MdOutlineEdit
-                size={32}
-                className="mt-2"
-                style={{ cursor: "pointer", color: "#343a40" }}
-                title="Edit Profile"
+              <button
+                type="button"
+                className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 rounded-pill px-3 py-1"
                 onClick={() => navigate("/edit_worker", { state: NewWorker })}
-              />
+                title="Edit Profile"
+              >
+                <MdOutlineEdit size={18} />
+                <span>Edit Profile</span>
+              </button>
             </div>
 
-            <div className="d-flex align-items-center mb-3">
+            {/* Profile Info Section */}
+            <div className="d-flex flex-column flex-sm-row align-items-center align-items-sm-start text-center text-sm-start mb-4 gap-3">
               <div
                 style={{
-                  width: "130px",
-                  height: "130px",
+                  width: "110px",
+                  height: "110px",
                   borderRadius: "50%",
                   overflow: "hidden",
-                  marginRight: "25px",
-                  border: "3px solid #ccc",
+                  border: "3px solid #e9ecef",
+                  flexShrink: 0,
                 }}
               >
                 <img
@@ -176,29 +177,30 @@ const Worker_middle = ({ isOnline, setIsOnline, worker }) => {
                   style={{ width: "100%", height: "100%", objectFit: "cover" }}
                 />
               </div>
-              <div>
-                <h3 className="fw-bold mb-2">{NewWorker.fullName}</h3>
-                <p className="text-muted fs-5 mb-1">{NewWorker.email}</p>
-                <p className="text-muted fs-5 mb-1">{NewWorker.phone}</p>
-                <p className="text-muted fs-5 mb-0">{NewWorker.address}</p>
+              <div className="w-100 overflow-hidden">
+                <h3 className="fw-bold mb-1 fs-4 text-dark text-break">{NewWorker.fullName}</h3>
+                <p className="text-muted fs-6 mb-1 text-break">{NewWorker.email}</p>
+                <p className="text-muted fs-6 mb-1 text-break">{NewWorker.phone}</p>
+                <p className="text-muted fs-6 mb-0 text-break">{NewWorker.address}</p>
               </div>
             </div>
 
-            {/* Working Categories and Go Online */}
-            <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap">
-              <h5 className="fw-bold fs-5 mb-0">Working Categories:</h5>
+            {/* Working Categories Header & Go Online Button */}
+            <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+              <h5 className="fw-bold fs-6 mb-0 text-dark">Working Categories:</h5>
               <button
                 onClick={toggleOnlineStatus}
-                className="btn fw-bold"
+                className="btn fw-semibold"
                 disabled={suspended}
                 style={{
                   borderRadius: "20px",
-                  padding: "6px 16px",
+                  padding: "6px 18px",
                   backgroundColor: isOnline ? "#dc3545" : "#198754",
                   color: "#fff",
                   border: `2px solid ${isOnline ? "#dc3545" : "#198754"}`,
                   opacity: suspended ? 0.6 : 1,
                   cursor: suspended ? "not-allowed" : "pointer",
+                  minHeight: "40px",
                 }}
                 title={suspended ? "You cannot go online while suspended" : ""}
               >
@@ -208,36 +210,41 @@ const Worker_middle = ({ isOnline, setIsOnline, worker }) => {
 
             {/* Categories */}
             <div className="d-flex flex-wrap gap-2 mb-4">
-              {NewWorker.workingCategory?.map((cat, idx) => (
-                <span
-                  key={idx}
-                  className="badge bg-primary text-light"
-                  style={{
-                    textTransform: "capitalize",
-                    fontSize: "1.1rem",
-                    padding: "0.6rem 1.2rem",
-                    borderRadius: "14px",
-                    fontWeight: "600",
-                  }}
-                >
-                  {cat}
-                </span>
-              ))}
+              {NewWorker.workingCategory?.length > 0 ? (
+                NewWorker.workingCategory.map((cat, idx) => (
+                  <span
+                    key={idx}
+                    className="badge bg-primary-subtle text-primary border border-primary-subtle"
+                    style={{
+                      textTransform: "capitalize",
+                      fontSize: "0.9rem",
+                      padding: "0.5rem 1rem",
+                      borderRadius: "12px",
+                      fontWeight: "600",
+                    }}
+                  >
+                    {cat}
+                  </span>
+                ))
+              ) : (
+                <span className="text-muted small">No categories added</span>
+              )}
             </div>
 
-            {/* Logout & History (swapped positions) */}
-            <div className="d-flex justify-content-between align-items-center mt-auto">
+            {/* Logout & History */}
+            <div className="d-flex justify-content-between align-items-center mt-auto pt-3 border-top gap-2">
               <button
                 onClick={handleLogout}
-                className="btn btn-outline-danger fw-bold d-flex align-items-center"
-                style={{ borderRadius: "20px", padding: "6px 14px" }}
+                className="btn btn-outline-danger fw-semibold d-flex align-items-center rounded-pill px-3 py-2"
+                style={{ minHeight: "40px" }}
               >
-                <FiLogOut className="me-2" size={18} />
+                <FiLogOut className="me-2" size={17} />
                 Logout
               </button>
 
               <button
-                className="btn btn-outline-primary fw-bold"
+                className="btn btn-outline-primary fw-semibold rounded-pill px-4 py-2"
+                style={{ minHeight: "40px" }}
                 onClick={() => navigate("/history_worker")}
               >
                 History
@@ -247,44 +254,54 @@ const Worker_middle = ({ isOnline, setIsOnline, worker }) => {
         </div>
 
         {/* Right Cards */}
-        <div className="col-md-4 d-flex flex-column gap-3">
-          <div className="card text-center shadow flex-fill" style={{ borderRadius: "14px" }}>
-            <div className="card-body d-flex flex-column justify-content-center">
-              <h4 className="fw-bold mb-3 fs-4">
-                <FaWallet size={26} className="me-2 text-black" /> Wallet
-              </h4>
-              <p className="fs-2 fw-bold text-success mb-0">₹ {NewWorker.walletBalance || 0}</p>
+        <div className="col-12 col-md-4 d-flex flex-column gap-3">
+          <div
+            className="card text-center shadow-sm flex-fill border-0"
+            style={{ borderRadius: "14px", backgroundColor: "#ffffff" }}
+          >
+            <div className="card-body p-3 p-sm-4 d-flex flex-column justify-content-center">
+              <h5 className="fw-bold mb-2 text-dark">
+                <FaWallet size={22} className="me-2 text-primary" /> Wallet
+              </h5>
+              <p className="fs-3 fw-bold text-success mb-0">₹ {NewWorker.walletBalance || 0}</p>
             </div>
           </div>
 
-          <div className="card text-center shadow flex-fill" style={{ borderRadius: "14px" }}>
-            <div className="card-body d-flex flex-column justify-content-center">
-              <h4 className="fw-bold mb-3 fs-4">
-                <IoIosInformationCircle size={26} className="me-2 text-black" />
+          <div
+            className="card text-center shadow-sm flex-fill border-0"
+            style={{ borderRadius: "14px", backgroundColor: "#ffffff" }}
+          >
+            <div className="card-body p-3 p-sm-4 d-flex flex-column justify-content-center">
+              <h5 className="fw-bold mb-3 text-dark">
+                <IoIosInformationCircle size={22} className="me-2 text-primary" />
                 Worker Info
-              </h4>
-              <p className="fs-5 mb-2">
-  <strong>
-    <FaStar className="me-2 text-warning" /> Rating:
-  </strong>{" "}
-  {NewWorker.rating !== undefined && NewWorker.rating !== null
-    ? Number(NewWorker.rating).toFixed(2)
-    : "N/A"}
-</p>
-              <p className="fs-5 mb-2">
-                <strong>
-                  <FaCalendarAlt className="me-2 text-black" /> Experience:
-                </strong>{" "}
-                {NewWorker.yearOfExperience || 0} yrs
-              </p>
-              <p className="fs-5">
-                <strong>
-                  <MdVerifiedUser className="me-2 text-black" /> Verified:
-                </strong>{" "}
-                <span className={NewWorker.isVerified ? "text-success" : "text-danger"}>
-                  {NewWorker.isVerified ? "✅ Yes" : "❌ No"}
-                </span>
-              </p>
+              </h5>
+              <div className="d-flex flex-column gap-2 text-start px-2">
+                <div className="d-flex justify-content-between align-items-center">
+                  <span className="text-muted small">
+                    <FaStar className="me-1 text-warning" /> Rating:
+                  </span>
+                  <span className="fw-semibold small">
+                    {NewWorker.rating !== undefined && NewWorker.rating !== null
+                      ? Number(NewWorker.rating).toFixed(2)
+                      : "N/A"}
+                  </span>
+                </div>
+                <div className="d-flex justify-content-between align-items-center">
+                  <span className="text-muted small">
+                    <FaCalendarAlt className="me-1 text-secondary" /> Experience:
+                  </span>
+                  <span className="fw-semibold small">{NewWorker.yearOfExperience || 0} yrs</span>
+                </div>
+                <div className="d-flex justify-content-between align-items-center">
+                  <span className="text-muted small">
+                    <MdVerifiedUser className="me-1 text-primary" /> Verified:
+                  </span>
+                  <span className={`fw-semibold small ${NewWorker.isVerified ? "text-success" : "text-danger"}`}>
+                    {NewWorker.isVerified ? "✅ Yes" : "❌ No"}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         </div>

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { FaStar } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from "../../api.js";
 
 const Feedback = ({ serviceRequestId, onSubmit }) => {
   const [rating, setRating] = useState(0);
@@ -20,7 +20,7 @@ const Feedback = ({ serviceRequestId, onSubmit }) => {
     setError(null);
 
     try {
-      await axios.post("https://karigarbackend.vercel.app/api/v1/worker/rate", {
+      await api.post("/api/v1/worker/rate", {
         serviceRequestId,
         rating,
       });
@@ -65,7 +65,8 @@ const Feedback = ({ serviceRequestId, onSubmit }) => {
       {error && <p className="text-danger">{error}</p>}
 
       <button
-        className="btn btn-primary px-4 py-2"
+        className="btn btn-primary px-4 py-2 fw-semibold rounded-pill"
+        style={{ minHeight: "44px" }}
         onClick={handleSubmit}
         disabled={loading}
       >

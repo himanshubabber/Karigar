@@ -1,9 +1,8 @@
 import { useState } from "react";
-import axios from "axios";
+import api from "../../api.js";
 import { useNavigate } from "react-router-dom";
 import { useCustomer } from "../../Context/Customer_context";
 import Spinner from "../../components/Style/Spinner.jsx";
-// import api from "../../../api.js"
 import { GoogleLogin } from "@react-oauth/google";
 import {jwtDecode} from "jwt-decode";
 
@@ -34,9 +33,7 @@ const Signin_customer = () => {
     console.log(e);
 
     try {
-      const res = await axios.post("https://karigarbackend.vercel.app/api/v1/customer/login", form, {
-        withCredentials: true,
-      });
+      const res = await api.post("/api/v1/customer/login", form);
 
       const customer = res.data?.data?.customer;
       const accessToken = res.data?.data?.accessToken;
@@ -70,11 +67,7 @@ const Signin_customer = () => {
 
       if (!decoded.email) throw new Error("Google profile with email is required");
 
-      const res = await axios.post(
-        "https://karigarbackend.vercel.app/api/v1/customer/google-login",
-        { credential },
-        { withCredentials: true }
-      );
+      const res = await api.post("/api/v1/customer/google-login", { credential });
 
       const customer = res.data?.data?.customer;
       const accessToken = res.data?.data?.accessToken;
@@ -96,14 +89,14 @@ const Signin_customer = () => {
   };
 
   return (
-    <div className="d-flex justify-content-center align-items-center vh-100 bg-light">
-      <div className="card shadow" style={{ width: "28rem" }}>
-        <div className="card-body">
-          <h3 className="text-center mb-4">Customer Login</h3>
+    <div className="d-flex justify-content-center align-items-center min-vh-100 py-4 py-sm-5 px-3 bg-light">
+      <div className="card shadow-sm border-0 w-100" style={{ maxWidth: "28rem", borderRadius: "14px", backgroundColor: "#ffffff" }}>
+        <div className="card-body p-3 p-sm-4">
+          <h3 className="text-center mb-4 fw-bold text-dark">Customer Login</h3>
           <form onSubmit={handleSubmit}>
             {["email", "password"].map((field, idx) => (
               <div className="mb-3" key={idx}>
-                <label className="form-label">
+                <label className="form-label fw-semibold">
                   {field.charAt(0).toUpperCase() + field.slice(1)}
                 </label>
                 <input
@@ -112,45 +105,41 @@ const Signin_customer = () => {
                   className="form-control"
                   value={form[field]}
                   onChange={handleChange}
+                  placeholder={`Enter your ${field}`}
+                  required
                 />
               </div>
             ))}
 
-            <p className="mt-3 text-center">
+            <p className="mt-3 text-center small text-muted">
               Don't have an account?{" "}
               <span
-                style={{ color: "#007bff", cursor: "pointer", textDecoration: "underline" }}
+                style={{ color: "#007bff", cursor: "pointer", textDecoration: "underline", fontWeight: "600" }}
                 onClick={() => navigate("/signup_customer")}
               >
                  Sign up 
               </span>
             </p>
 
-            <button type="submit" className="btn btn-primary w-100" >
+            <button
+              type="submit"
+              className="btn btn-primary w-100 fw-semibold py-2"
+              style={{ minHeight: "44px", borderRadius: "8px" }}
+            >
               Sign In
             </button>
-             <p></p>
-            <p style={{textAlign:"center"}}>Or</p>
 
-            <div
-  style={{
-    display: "flex",           // enable flex
-    justifyContent: "center",  // center horizontally
-    width: "28rem",            // match your card width
-    maxWidth: "100%",          // responsive on smaller screens
-    margin: "1rem auto",       // center container in page
-  }}
->
-    <GoogleLogin
-      onSuccess={handleGoogleLogin}
-      onError={() => console.log("Google login failed")}
-      theme="filled_blue"
-      size="large"
-      width={448} // max width allowed
-    ></GoogleLogin>
-    </div>
- 
+            <div className="text-center my-3 text-muted small">Or continue with</div>
 
+            <div className="w-100 d-flex justify-content-center overflow-hidden">
+              <GoogleLogin
+                onSuccess={handleGoogleLogin}
+                onError={() => console.log("Google login failed")}
+                theme="filled_blue"
+                size="large"
+                shape="pill"
+              />
+            </div>
           </form>
         </div>
       </div>

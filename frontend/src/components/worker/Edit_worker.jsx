@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import api from "../../api.js";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useWorker } from "../../Context/Worker_context";
 
@@ -17,22 +17,38 @@ const Edit_worker = () => {
 
   const [editable, setEditable] = useState({
     fullName: false,
-    email: false,
     phone: false,
     address: false,
   });
 
+  const availableCategories = [
+    "plumber",
+    "electrician",
+    "carpenter",
+    "painter",
+    "tv",
+    "fridge",
+    "ac",
+    "washing-machine",
+    "laptop",
+  ];
+
   const [workingCategory, setWorkingCategory] = useState(workerData?.workingCategory || []);
+  const [selectedCategory, setSelectedCategory] = useState(
+    availableCategories.find(
+      (cat) => !workerData?.workingCategory?.some((c) => c.toLowerCase() === cat.toLowerCase())
+    ) || availableCategories[0]
+  );
   const [profilePhoto, setProfilePhoto] = useState(workerData?.profilePhoto || "");
   const [photoFile, setPhotoFile] = useState(null);
 
   const updateFieldAPI = async (field, value) => {
     const apiMap = {
-      fullName: "https://karigarbackend.vercel.app/api/v1/worker/update-fullName",
-      email: "https://karigarbackend.vercel.app/api/v1/worker/update-email",
-      phone: "https://karigarbackend.vercel.app/api/v1/worker/update-phone",
-      address: "https://karigarbackend.vercel.app/api/v1/worker/update-address",
-      profilePhoto: "https://karigarbackend.vercel.app/api/v1/worker/update-profile-photo",
+      fullName: "/api/v1/worker/update-fullName",
+      email: "/api/v1/worker/update-email",
+      phone: "/api/v1/worker/update-phone",
+      address: "/api/v1/worker/update-address",
+      profilePhoto: "/api/v1/worker/update-profile-photo",
     };
 
     try {
@@ -40,9 +56,8 @@ const Edit_worker = () => {
         const formData = new FormData();
         formData.append("profilePhoto", value);
 
-        const { data } = await axios.patch(apiMap[field], formData, {
+        const { data } = await api.patch(apiMap[field], formData, {
           headers: { Authorization: `Bearer ${token}` },
-          withCredentials: true,
         });
       //  setProfilePhoto(data.data.profilePhoto);
 
@@ -56,10 +71,9 @@ const Edit_worker = () => {
         console.log(data.data);
         alert("Profile photo updated successfully!");
       } else {
-        await axios.patch(apiMap[field], { [field]: value }, 
+        await api.patch(apiMap[field], { [field]: value }, 
           {   
             headers: { Authorization: `Bearer ${token}` },
-          withCredentials: true,
            });
         alert(`${field} updated successfully!`);
 
@@ -107,39 +121,62 @@ const Edit_worker = () => {
     }
   };
 
-  const handleAddCategory = async() => {
-    const input = document.getElementById("newCategory");
-    const newCat = input.value.trim();
+  const handleAddCategory = async () => {
+    if (!selectedCategory) {
+      alert("Please select a category.");
+      return;
+    }
 
     try {
-    const { data } = await axios.patch(
-      "https://karigarbackend.vercel.app/api/v1/worker/update-categories",
-      { newCategory: newCat },
-      {  headers: { Authorization: `Bearer ${token}` },
-      withCredentials: true,}
-    );
+      const { data } = await api.patch(
+        "/api/v1/worker/update-categories",
+        { newCategory: selectedCategory },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
-    setWorkingCategory(data.data.workingCategory); // updated from backend
-    input.value = "";
-    alert("Category added successfully!");
-  } catch (err) {
-    console.error(err);
-    alert("Failed to add category: " + (err.response?.data?.message || err.message));
-  }
-
+      const updated = data.data.workingCategory;
+      setWorkingCategory(updated); // updated from backend
+      setWorker((prev) => ({
+        ...prev,
+        workingCategory: updated,
+      }));
+      const nextAvailable = availableCategories.find(
+        (c) => !updated.some((cat) => cat.toLowerCase() === c.toLowerCase())
+      ) || availableCategories[0];
+      setSelectedCategory(nextAvailable);
+      alert("Category added successfully!");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to add category: " + (err.response?.data?.message || err.message));
+    }
   };
 
-  const handleRemoveCategory = (index) => {
-    setWorkingCategory((prev) => prev.filter((_, i) => i !== index));
+  const handleRemoveCategory = async (catToRemove, index) => {
+    try {
+      await api.patch(
+        "/api/v1/worker/remove-category",
+        { category: catToRemove },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+    } catch (err) {
+      console.warn("Backend remove-category note:", err?.message);
+    }
+
+    const updated = workingCategory.filter((_, i) => i !== index);
+    setWorkingCategory(updated);
+    setWorker((prev) => ({
+      ...prev,
+      workingCategory: updated,
+    }));
   };
 
   return (
-    <div className="container mt-5">
+    <div className="container-fluid container-md py-3 py-sm-4 px-2 px-sm-3">
       <div
-        className="card shadow p-4"
-        style={{ maxWidth: "600px", margin: "0 auto", borderRadius: "16px" }}
+        className="card shadow-sm p-3 p-sm-4 border-0 w-100"
+        style={{ maxWidth: "600px", margin: "0 auto", borderRadius: "16px", backgroundColor: "#ffffff" }}
       >
-        <h3 className="text-center mb-4">Edit Worker Profile</h3>
+        <h3 className="text-center mb-4 fw-bold text-dark">Edit Worker Profile</h3>
 
         {/* Profile Photo Section */}
         <div className="text-center mb-4">
@@ -175,11 +212,27 @@ const Edit_worker = () => {
           </button>
         </div>
 
-        {/* Editable Fields */}
+        {/* Fields */}
         <form className="mt-3">
-          {["fullName", "email", "phone", "address"].map((field) => (
+          {/* Email - Not Editable */}
+          <div className="mb-4">
+            <label className="form-label text-capitalize">Email</label>
+            <input
+              type="email"
+              name="email"
+              className="form-control bg-light"
+              value={form.email}
+              disabled
+              readOnly
+            />
+            <small className="text-muted">Email is not editable.</small>
+          </div>
+
+          {["fullName", "phone", "address"].map((field) => (
             <div className="mb-4" key={field}>
-              <label className="form-label text-capitalize">{field}</label>
+              <label className="form-label text-capitalize">
+                {field === "fullName" ? "Full Name" : field}
+              </label>
               <div className="input-group">
                 <input
                   type="text"
@@ -207,29 +260,51 @@ const Edit_worker = () => {
               {workingCategory.map((cat, idx) => (
                 <span
                   key={idx}
-                  className="badge bg-primary text-light d-flex align-items-center"
-                  style={{ padding: "0.5rem 0.75rem", borderRadius: "12px" }}
+                  className="badge bg-primary text-light d-flex align-items-center text-capitalize"
+                  style={{ padding: "0.5rem 0.85rem", borderRadius: "12px", fontSize: "0.95rem" }}
                 >
                   {cat}
                   <button
                     type="button"
-                    className="btn btn-white ms-2"
-                    onClick={() => handleRemoveCategory(idx)}
-                  ></button>
+                    className="btn btn-sm text-white ms-2 p-0 border-0 d-inline-flex align-items-center justify-content-center"
+                    style={{
+                      background: "transparent",
+                      cursor: "pointer",
+                      fontSize: "1.1rem",
+                      lineHeight: "1",
+                      fontWeight: "bold",
+                    }}
+                    onClick={() => handleRemoveCategory(cat, idx)}
+                    title={`Remove ${cat}`}
+                    aria-label={`Remove ${cat}`}
+                  >
+                    &times;
+                  </button>
                 </span>
               ))}
             </div>
             <div className="input-group">
-              <input
-                type="text"
-                className="form-control"
-                placeholder="Add category"
-                id="newCategory"
-              />
+              <select
+                className="form-select text-capitalize"
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+              >
+                {availableCategories.map((cat) => {
+                  const isAlreadyAdded = workingCategory.some(
+                    (c) => c.toLowerCase() === cat.toLowerCase()
+                  );
+                  return (
+                    <option key={cat} value={cat} disabled={isAlreadyAdded}>
+                      {cat} {isAlreadyAdded ? "(Added)" : ""}
+                    </option>
+                  );
+                })}
+              </select>
               <button
                 type="button"
                 className="btn btn-outline-secondary"
                 onClick={handleAddCategory}
+                disabled={!selectedCategory || workingCategory.some((c) => c.toLowerCase() === selectedCategory.toLowerCase())}
               >
                 Add
               </button>
@@ -237,10 +312,11 @@ const Edit_worker = () => {
           </div>
 
           {/* Go to Profile */}
-          <div className="text-end mt-4">
+          <div className="d-flex justify-content-end mt-4">
             <button
               type="button"
-              className="btn btn-primary"
+              className="btn btn-primary w-100 w-sm-auto px-4 py-2 fw-semibold rounded-pill"
+              style={{ minHeight: "44px" }}
               onClick={() =>
                 navigate("/worker", {
                   state: { ...workerData, ...form, profilePhoto, workingCategory },

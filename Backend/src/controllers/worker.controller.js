@@ -332,7 +332,31 @@ const updateCategory= asyncHandler(async(req,res)=>{
     res
       .status(200)
       .json(new ApiResponse(200, worker, "Category added successfully"));
-})
+});
+
+const removeCategory = asyncHandler(async (req, res) => {
+    const workerId = req.worker?._id;
+
+    if (!workerId) throw new ApiError(401, "Unauthorized");
+
+    const { category } = req.body;
+
+    if (!category || typeof category !== "string") {
+      throw new ApiError(400, "Invalid category");
+    }
+
+    const worker = await Worker.findById(workerId);
+    if (!worker) throw new ApiError(404, "Worker not found");
+
+    worker.workingCategory = worker.workingCategory.filter(
+      (cat) => cat.toLowerCase() !== category.toLowerCase()
+    );
+    await worker.save();
+
+    res
+      .status(200)
+      .json(new ApiResponse(200, worker, "Category removed successfully"));
+});
 
 
 
@@ -597,4 +621,5 @@ export{
     verifyOtpForService,
     getWorkerById,
     rateWorker,
+    removeCategory,
 }

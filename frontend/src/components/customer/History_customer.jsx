@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../api.js";
 import { useCustomer } from "../../Context/Customer_context";
 import { useNavigate } from "react-router-dom";
 import { useServiceReq } from "../../Context/Service_req_context";
@@ -18,9 +18,8 @@ const History_customer = () => {
   // Fetch service request history
   const fetchCustomerHistory = async () => {
     try {
-      const { data } = await axios.get("https://karigarbackend.vercel.app/api/v1/serviceRequest/history", {
+      const { data } = await api.get("/api/v1/serviceRequest/history", {
         headers: { Authorization: `Bearer ${token}` },
-        withCredentials: true,
       });
       setHistory(data?.data || []);
     } catch (err) {
@@ -32,10 +31,9 @@ const History_customer = () => {
  
   const handleGobackbutton = async (id) => {
     try {
-      const fullDetails = await axios.post(
-        "https://karigarbackend.vercel.app/api/v1/serviceRequest/get-service-details",
-        { serviceRequestId: id },
-        { withCredentials: true }
+      const fullDetails = await api.post(
+        "/api/v1/serviceRequest/get-service-details",
+        { serviceRequestId: id }
       );
   
       const fetchedRequest = fullDetails?.data?.data?.serviceRequest;
@@ -71,8 +69,8 @@ const History_customer = () => {
         if (newWorkerInfoMap[id]) continue;
 
         try {
-          const { data } = await axios.post(
-            "https://karigarbackend.vercel.app/api/v1/worker/worker-info",
+          const { data } = await api.post(
+            "/api/v1/worker/worker-info",
             { id: id },
           );
           newWorkerInfoMap[id] = data?.data;
@@ -94,10 +92,10 @@ const History_customer = () => {
   }, []);
 
   return (
-    <div className="container py-5">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2 className="fw-bold text-primary">🕓 Service History</h2>
-        <button className="btn btn-outline-primary" onClick={() => navigate("/customer")}>
+    <div className="container-fluid container-lg py-3 py-sm-4 px-2 px-sm-3">
+      <div className="d-flex justify-content-between align-items-center mb-3 mb-sm-4 flex-wrap gap-2">
+        <h3 className="fw-bold text-primary mb-0 fs-4 fs-sm-3">🕓 Service History</h3>
+        <button className="btn btn-outline-primary rounded-pill px-3 py-1" onClick={() => navigate("/customer")}>
           ⬅ Back to Profile
         </button>
       </div>
@@ -112,49 +110,49 @@ const History_customer = () => {
           No past service requests found.
         </div>
       ) : (
-        <div className="row row-cols-1 row-cols-md-1 row-cols-lg-2 g-4 d-flex justify-content-center">
+        <div className="row row-cols-1 row-cols-lg-2 g-3 g-sm-4">
           {history.map((item, index) => {
             const worker = item.workerId ? workerInfoMap[item.workerId] : null;
 
             return (
               <div className="col" key={index}>
                 <div
-                  className="card border-0 shadow-lg"
+                  className="card border-0 shadow-sm h-100"
                   style={{
-                    minHeight: "220px",
                     padding: "16px",
                     borderRadius: "14px",
+                    backgroundColor: "#ffffff",
                   }}
                 >
-                  <div className="card-body px-3 py-2">
+                  <div className="card-body p-1 p-sm-2 d-flex flex-column h-100">
                     <h5 className="card-title text-primary text-capitalize mb-2">
                       🛠 {item.category}
                     </h5>
 
                     {worker && (
-                      <div className="mb-2">
+                      <div className="mb-2 text-break">
                         <strong>👷 Worker Info:</strong>
                         <ul className="list-unstyled small ms-3 mb-0">
                           <li><strong>Name:</strong> {worker.fullName}</li>
-                          <li><strong>Email:</strong> {worker.email}</li>
+                          <li className="text-break"><strong>Email:</strong> {worker.email}</li>
                           <li><strong>Phone:</strong> {worker.phone}</li>
                         </ul>
                       </div>
                     )}
 
-                    <ul className="list-unstyled small mb-1">
+                    <ul className="list-unstyled small mb-3">
                       <li><strong>Status:</strong> {item.orderStatus}</li>
                       <li><strong>Job:</strong> {item.jobStatus}</li>
                       <li><strong>Payment:</strong> {item.paymentStatus}</li>
                       <li><strong>Payment Type:</strong> {item.paymentType || "N/A"}</li>
                       {item.quoteAmount && <li><strong>Quote:</strong> ₹{item.quoteAmount}</li>}
                       <li><strong>Visiting Charge:</strong> ₹{item.visitingCharge}</li>
-                      {item.description && <li><strong>Description:</strong> {item.description}</li>}
+                      {item.description && <li className="text-break"><strong>Description:</strong> {item.description}</li>}
 
                       {item.cancellationReason !== "NA" && (
                         <>
                           <li><strong>Cancelled By:</strong> {item.cancelledBy}</li>
-                          <li><strong>Reason:</strong> {item.cancellationReason}</li>
+                          <li className="text-break"><strong>Reason:</strong> {item.cancellationReason}</li>
                         </>
                       )}
 
@@ -174,22 +172,24 @@ const History_customer = () => {
                     </ul>
 
                     {item.audioNoteUrl && (
-                      <div className="mt-2">
+                      <div className="mt-2 mb-3">
                         <strong>🎤 Audio Note:</strong>
                         <audio className="w-100 mt-1" controls src={item.audioNoteUrl} />
                       </div>
                     )}
 
-   <div className="mt-auto d-flex justify-content-end">
-  <button
-    className="btn btn-warning"
-    onClick={() => handleGobackbutton(item._id)}
-    disabled={item.orderStatus==="completed" || 
-      item.orderStatus==="cancelled"} // disables if completedAt exists
-  >
-    Go to Request
-  </button>
-    </div>
+                    <div className="mt-auto d-flex justify-content-end">
+                      <button
+                        className="btn btn-warning rounded-pill px-3 py-1 fw-semibold w-100 w-sm-auto"
+                        onClick={() => handleGobackbutton(item._id)}
+                        disabled={
+                          item.orderStatus === "completed" || 
+                          item.orderStatus === "cancelled"
+                        }
+                      >
+                        Go to Request
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
