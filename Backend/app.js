@@ -22,18 +22,35 @@ const app = express();
 await connectDB();
 
 // CORS setup
-// const allowedOrigins = [
-//   process.env.CORS_ORIGIN,
-//   "https://karigar-mu.vercel.app",
-//   "http://localhost:5173",
-//   "http://localhost:5174",
-//   "http://localhost:3000",
-//   https://karigar-9rb90t6ty-himanshubabbers-projects.vercel.app
-// ].filter(Boolean);
+/*const allowedOrigins = [
+  process.env.CORS_ORIGIN ||
+    "http://localhost:5173" || 
+    "https://karigar-mu.vercel.app" 
+    || "http://localhost:5174",*/
+  // hello
+  // Add any additional frontend URLs here
+//];
 
-const allowedOrigins = process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(",").map(url => url.trim()) : [];
+
+// app.use(cors({
+//   origin: "http://localhost:5173",
+//   credentials: true,
+//   methods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
+//   allowedHeaders: ["Content-Type", "Authorization"]
+// }));
+
 
 app.use(cors({
+  origin: 'https://karigar-mu.vercel.app',
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true, 
+}));
+
+//  app.options("*", cors());
+
+/*
+const corsOptions = {
   origin: function (origin, callback) {
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
@@ -41,10 +58,11 @@ app.use(cors({
       callback(new Error("Not allowed by CORS"));
     }
   },
-  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true, 
-}));
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+};
+
+app.use(cors(corsOptions));*/
 
 
 // Middleware

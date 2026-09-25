@@ -1,6 +1,5 @@
 import React, { useState, useRef } from "react";
 import axios from "axios";
-import api from "../../api.js";
 import { useNavigate } from "react-router-dom";
 import { useServiceReq } from "../../Context/Service_req_context.jsx";
 import { useOtp } from "../../Context/Otp_context.jsx";
@@ -139,8 +138,8 @@ const Service_req_form = () => {
       }
       setLoading(true);
 
-      const res = await api.post(
-        "/api/v1/serviceRequest/create",
+      const res = await axios.post(
+        "https://karigarbackend.vercel.app/api/v1/serviceRequest/create",
         {
           category: toTitleCase(category),
           description,
@@ -152,6 +151,7 @@ const Service_req_form = () => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`, // ✅ use token in header
           },
+          withCredentials: true,
         }
       );
 
@@ -164,13 +164,14 @@ const Service_req_form = () => {
       localStorage.setItem("selectedReq", JSON.stringify(serviceRequestData));
       localStorage.setItem("serviceRequestId", serviceRequestId);
 
-      const otpRes = await api.post(
-        "/api/v1/customer/generate-otp",
+      const otpRes = await axios.post(
+        "https://karigarbackend.vercel.app/api/v1/customer/generate-otp",
         { serviceRequestId },
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
+          withCredentials: true,
         }
       );
 
@@ -190,23 +191,15 @@ const Service_req_form = () => {
 
   return (
     <div
-      className="d-flex justify-content-center align-items-center min-vh-100 py-4 py-sm-5 px-3"
+      className="d-flex justify-content-center align-items-center vh-100"
       style={{
         backgroundImage: `url('/landing_page.png')`,
         backgroundSize: "cover",
         backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-        backgroundColor: "#f8f9fa",
+        backgroundRepeat: "no-repeat"
       }}
     >
-      <div
-        className="card shadow-lg p-3 p-sm-4 w-100 my-auto border-0"
-        style={{
-          maxWidth: "36rem",
-          borderRadius: "15px",
-          backgroundColor: "rgba(255, 255, 255, 0.96)",
-        }}
-      >
+      <div className="card shadow-lg p-4" style={{ width: "36rem", borderRadius: "15px", backgroundColor: "rgba(255, 255, 255, 0.95)" }}>
         <h3 className="text-center fw-bold mb-3 text-primary">Request a Service</h3>
         <form onSubmit={handleSubmit}>
           {/* Category */}
@@ -273,25 +266,21 @@ const Service_req_form = () => {
 
           {/* Location */}
           <div className="mb-3">
-            <label className="form-label fw-semibold d-block">Location *</label>
-            <button
-              type="button"
-              className="btn btn-success text-white mb-2 w-100 w-sm-auto"
-              style={{ minHeight: "42px" }}
-              onClick={handleUseLocation}
-            >
-              📍 Use Current Location
+            <label className="form-label fw-semibold">Location *</label>
+            <button type="button" className=
+            "btn btn-success text-white mb-2" onClick={handleUseLocation}>
+              Use Current Location
             </button>
-            {locationText && <div className="text-muted small text-break mt-1">{locationText}</div>}
+            {locationText && <div className="text-muted small">{locationText}</div>}
           </div>
 
           {/* Submit */}
           <button
             type="submit"
-            className="btn btn-primary w-100 w-sm-50 mx-auto d-block fw-bold py-2 py-sm-3 mt-4"
-            style={{ fontWeight: "700", minHeight: "46px", borderRadius: "10px" }} 
+           className="btn btn-primary w-50 mx-auto d-block fw-bold py-3"
+           style={{ fontWeight: "700" }} 
           >
-            Submit Request
+         Submit Request
           </button>
         </form>
       </div>

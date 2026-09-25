@@ -1,5 +1,5 @@
 import { useState } from "react";
-import api from "../../api.js";
+import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useWorker } from "../../Context/Worker_context";
 import Spinner from "../../components/Style/Spinner.jsx";
@@ -37,7 +37,9 @@ const Signin_worker = () => {
     setLoading(true);
 
     try {
-      const res = await api.post("/api/v1/worker/login", form);
+      const res = await axios.post("https://karigarbackend.vercel.app/api/v1/worker/login", form, {
+        withCredentials: true,
+      });
 
       const worker = res.data?.data?.worker;
       const accessToken = res.data?.data?.accessToken;
@@ -66,7 +68,11 @@ const Signin_worker = () => {
 
       if (!decoded.email) throw new Error("Google profile with email is required");
 
-      const res = await api.post("/api/v1/worker/google-login", { credential });
+      const res = await axios.post(
+        "https://karigarbackend.vercel.app/api/v1/worker/google-login",
+        { credential },
+        { withCredentials: true }
+      );
 
       const worker = res.data?.data?.worker;
       const accessToken = res.data?.data?.accessToken;
@@ -88,64 +94,69 @@ const Signin_worker = () => {
   };
   
   return ( 
-    <div className="d-flex justify-content-center align-items-center min-vh-100 py-4 py-sm-5 px-3 bg-light">
-      <div className="card shadow-sm border-0 w-100" style={{ maxWidth: "28rem", borderRadius: "14px", backgroundColor: "#ffffff" }}>
-        <div className="card-body p-3 p-sm-4">
-          <h3 className="text-center mb-4 fw-bold text-dark">Worker Login</h3>
+    <div className="d-flex justify-content-center align-items-center vh-100 bg-light">
+     
+      <div className="card shadow" style={{ width: "28rem" }}>
+        <div className="card-body">
+          <h3 className="text-center mb-4"
+          >Worker Login</h3>
+
 
           <form onSubmit={handleSubmit}>
             <div className="mb-3">
-              <label className="form-label fw-semibold">Email</label>
+              <label className="form-label">Email</label>
               <input
                 type="email"
                 name="email"
                 className="form-control"
                 value={form.email}
                 onChange={handleChange}
-                placeholder="Enter your email"
-                required
               />
             </div>
             <div className="mb-3">
-              <label className="form-label fw-semibold">Password</label>
+              <label className="form-label">Password</label>
               <input
                 type="password"
                 name="password"
                 className="form-control"
                 value={form.password}
                 onChange={handleChange}
-                placeholder="Enter your password"
-                required
               />
             </div>
-            <p className="mt-3 text-center small text-muted">
+            <p className="mt-3 text-center">
               Don't have an account?{" "}
               <span
-                style={{ color: "#007bff", cursor: "pointer", textDecoration: "underline", fontWeight: "600" }}
+                style={{ color: "#007bff", cursor: "pointer", textDecoration: "underline" }}
                 onClick={() => navigate("/signup_worker")}
               >
                 Sign up
               </span>
             </p>
-            <button
-              type="submit"
-              className="btn btn-primary w-100 fw-semibold py-2"
-              style={{ minHeight: "44px", borderRadius: "8px" }}
-            >
+            <button type="submit" className="btn btn-primary w-100">
               Sign In
             </button>
 
-            <div className="text-center my-3 text-muted small">Or continue with</div>
+            <p></p>
+            <p style={{textAlign:"center"}}>Or</p>
 
-            <div className="w-100 d-flex justify-content-center overflow-hidden">
-              <GoogleLogin
-                onSuccess={handleGoogleLogin}
-                onError={() => console.log("Google login failed")}
-                theme="filled_blue"
-                size="large"
-                shape="pill"
-              />
-            </div>
+            <div
+  style={{
+    display: "flex",           // enable flex
+    justifyContent: "center",  // center horizontally
+    width: "28rem",            // match your card width
+    maxWidth: "100%",          // responsive on smaller screens
+    margin: "1rem auto",       // center container in page
+  }}
+>
+    <GoogleLogin
+      onSuccess={handleGoogleLogin}
+      onError={() => console.log("Google login failed")}
+      theme="filled_blue"
+      size="large"
+      width={448} // max width allowed
+    ></GoogleLogin>
+    </div>
+  
           </form>
 
   

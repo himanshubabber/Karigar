@@ -55,15 +55,15 @@ const Header_worker = ({ isOnline }) => {
   };
 
   return (
-    <header className="navbar navbar-expand-lg navbar-light bg-white shadow-sm border-bottom sticky-top py-2 py-lg-3">
-      <div className="container-fluid px-3 px-lg-4">
+    <header className="bg-white shadow-sm border-bottom">
+      <div className="container-fluid d-flex align-items-center py-2 px-2">
 
         {/* Logo */}
-        <a href="/" className="navbar-brand d-flex align-items-center text-decoration-none me-2 me-lg-3">
-          <i className="bi bi-tools me-2 fs-4 text-primary"></i>
+        <a href="/" className="d-flex align-items-center text-decoration-none me-auto">
+          <i className="bi bi-tools me-2 fs-3 text-primary"></i>
           <span
             style={{
-              fontSize: "1.6rem",
+              fontSize: "1.8rem",
               fontWeight: "900",
               color: "#0d6efd",
               letterSpacing: "1px",
@@ -73,35 +73,22 @@ const Header_worker = ({ isOnline }) => {
           </span>
         </a>
 
-        {/* All Requests (Mobile quick button if online) */}
+        {/* All Requests */}
         {isOnline && (
-          <button className="btn btn-warning btn-sm fw-semibold me-2 d-lg-none" onClick={handle_navigate}>
+          <button className="btn btn-warning me-3" onClick={handle_navigate}>
             All Requests
           </button>
         )}
 
-        {/* Mobile Toggle Button */}
-        <button
-          className="navbar-toggler border-0 shadow-none ms-auto"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#workerNavbarContent"
-          aria-controls="workerNavbarContent"
-          aria-expanded="false"
-          aria-label="Toggle navigation"
-        >
-          <span className="navbar-toggler-icon"></span>
-        </button>
+        {/* Navigation */}
+        <div className="d-flex align-items-center gap-3 flex-nowrap">
 
-        {/* Collapsible Content */}
-        <div className="collapse navbar-collapse mt-3 mt-lg-0" id="workerNavbarContent">
-          {/* Main Navigation */}
-          <ul className="navbar-nav mx-auto mb-3 mb-lg-0 gap-1 gap-lg-3 justify-content-center text-center text-lg-start">
-            <li className="nav-item dropdown">
+          <ul className="nav align-items-center">
+            <li className="nav-item dropdown me-2">
               <a className="nav-link dropdown-toggle text-dark" data-bs-toggle="dropdown" href="#">
                 Home Services
               </a>
-              <ul className="dropdown-menu shadow-sm border-0 text-center text-lg-start">
+              <ul className="dropdown-menu">
                 <li><a className="dropdown-item" href="#">Plumber</a></li>
                 <li><a className="dropdown-item" href="#">Electrician</a></li>
                 <li><a className="dropdown-item" href="#">Carpenter</a></li>
@@ -109,11 +96,11 @@ const Header_worker = ({ isOnline }) => {
               </ul>
             </li>
 
-            <li className="nav-item dropdown">
+            <li className="nav-item dropdown me-2">
               <a className="nav-link dropdown-toggle text-dark" data-bs-toggle="dropdown" href="#">
                 Appliances
               </a>
-              <ul className="dropdown-menu shadow-sm border-0 text-center text-lg-start">
+              <ul className="dropdown-menu">
                 <li><a className="dropdown-item" href="#">TV</a></li>
                 <li><a className="dropdown-item" href="#">Fridge</a></li>
                 <li><a className="dropdown-item" href="#">AC</a></li>
@@ -121,59 +108,51 @@ const Header_worker = ({ isOnline }) => {
               </ul>
             </li>
 
-            <li className="nav-item dropdown">
+            <li className="nav-item dropdown me-2">
               <a className="nav-link dropdown-toggle text-dark" data-bs-toggle="dropdown" href="#">
                 Electronics
               </a>
-              <ul className="dropdown-menu shadow-sm border-0 text-center text-lg-start">
+              <ul className="dropdown-menu">
                 <li><a className="dropdown-item" href="#">Laptop</a></li>
               </ul>
             </li>
           </ul>
 
-          <div className="d-flex flex-column flex-lg-row align-items-center gap-2">
-            {/* All Requests (Desktop) */}
-            {isOnline && (
-              <button className="btn btn-warning fw-semibold d-none d-lg-inline-block text-nowrap" onClick={handle_navigate}>
-                All Requests
-              </button>
-            )}
+          {/* LOCATION (ONLY IMPROVED PART) */}
+          <div
+            className="input-group input-group-stylish rounded-pill"
+            style={{ minWidth: "250px", maxWidth: "320px" }}
+          >
+            <span className="input-group-text ps-3">
+              <i className="bi bi-geo-alt-fill"></i>
+            </span>
 
-            {/* LOCATION */}
-            <div
-              className="input-group input-group-stylish rounded-pill w-100"
-              style={{ maxWidth: "320px" }}
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Location..."
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+            />
+
+            <button
+              className="btn btn-primary btn-detect m-1 rounded-pill d-flex align-items-center gap-2"
+              onClick={detectLocation}
+              type="button"
+              disabled={isLoadingLoc}
             >
-              <span className="input-group-text ps-3">
-                <i className="bi bi-geo-alt-fill"></i>
+              {isLoadingLoc ? (
+                <span className="spinner-border spinner-border-sm" />
+              ) : (
+                <i className="bi bi-crosshair"></i>
+              )}
+
+              <span className="d-none d-sm-inline">
+                {isLoadingLoc ? "..." : "Detect"}
               </span>
-
-              <input
-                type="text"
-                className="form-control"
-                placeholder="Location..."
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-              />
-
-              <button
-                className="btn btn-primary btn-detect m-1 rounded-pill d-flex align-items-center gap-2"
-                onClick={detectLocation}
-                type="button"
-                disabled={isLoadingLoc}
-              >
-                {isLoadingLoc ? (
-                  <span className="spinner-border spinner-border-sm" />
-                ) : (
-                  <i className="bi bi-crosshair"></i>
-                )}
-
-                <span className="d-inline">
-                  {isLoadingLoc ? "..." : "Detect"}
-                </span>
-              </button>
-            </div>
+            </button>
           </div>
+
         </div>
       </div>
 

@@ -14,7 +14,7 @@ const occupations = [
   { title: 'Washing Machine', image: '/washing-machine.png' },
   { title: 'TV Repair', image: '/tv.png' },
   { title: 'Laptop Repair', image: '/laptop.png' },
-  { title: 'Fridge Repair', image: '/fridge.png' },
+  { title: 'Fridge Repair', image: 'fridge.png' },
 ];
 
 // --- Professional Color Palette ---

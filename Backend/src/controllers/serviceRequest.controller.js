@@ -12,7 +12,7 @@ import geolib from "geolib";
 
 const createServiceRequest = asyncHandler(async (req, res) => {
   const customerId = req.customer?._id;
-  const { category, description, customerLocation, audioNoteUrl = "", quoteAmount } = req.body;
+  const { category, description, customerLocation, audioNoteUrl = "" } = req.body;
  
    console.log(category);
   if (!category) {
@@ -28,22 +28,19 @@ const createServiceRequest = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Valid customerLocation is required");
   }
 
-  const normalizedCategory = category.toLowerCase().trim().replace(/\s+/g, "-");
-
   const serviceRequest = await ServiceRequest.create({
     customerId,
-    category: normalizedCategory,
+    category,
     description,
     customerLocation: {
       type: "Point",
       coordinates: customerLocation.coordinates
     },
-    audioNoteUrl,
-    ...(quoteAmount != null ? { quoteAmount: Number(quoteAmount) } : {})
+    audioNoteUrl
   });
 
   const createdServiceRequest = await ServiceRequest.findById(serviceRequest._id).select(
-    "_id customerId category description customerLocation audioNoteUrl quoteAmount"
+    "_id customerId category description customerLocation audioNoteUrl"
   );
 
   if (!createdServiceRequest) {
