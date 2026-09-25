@@ -22,14 +22,16 @@ const app = express();
 await connectDB();
 
 // CORS setup
-const allowedOrigins = [
-  process.env.CORS_ORIGIN,
-  "https://karigar-mu.vercel.app",
-  "http://localhost:5173",
-  "http://localhost:5174",
-  "http://localhost:3000",
-  https://karigar-9rb90t6ty-himanshubabbers-projects.vercel.app
-].filter(Boolean);
+// const allowedOrigins = [
+//   process.env.CORS_ORIGIN,
+//   "https://karigar-mu.vercel.app",
+//   "http://localhost:5173",
+//   "http://localhost:5174",
+//   "http://localhost:3000",
+//   https://karigar-9rb90t6ty-himanshubabbers-projects.vercel.app
+// ].filter(Boolean);
+
+const allowedOrigins = process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(",").map(url => url.trim()) : [];
 
 app.use(cors({
   origin: function (origin, callback) {
