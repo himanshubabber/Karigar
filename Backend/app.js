@@ -39,13 +39,12 @@ await connectDB();
 //   allowedHeaders: ["Content-Type", "Authorization"]
 // }));
 
-
-app.use(cors({
-  origin: 'https://karigar-mu.vercel.app',
-  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true, 
-}));
+// app.use(cors({
+//   origin: 'https://karigar-mu.vercel.app',
+//   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+//   allowedHeaders: ["Content-Type", "Authorization"],
+//   credentials: true, 
+// }));
 
 //  app.options("*", cors());
 
@@ -63,6 +62,19 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));*/
+
+// ✅ Active CORS: env-aware (dev allows localhost, prod allows Vercel frontend)
+const allowedOrigins =
+  process.env.NODE_ENV === "production"
+    ? [process.env.CORS_ORIGIN || "https://karigar-mu.vercel.app"]
+    : ["http://localhost:5173", "http://localhost:5174"];
+
+app.use(cors({
+  origin: allowedOrigins,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true,
+}));
 
 
 // Middleware

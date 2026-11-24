@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
+import api from "../../api.js";
 import { useNavigate } from "react-router-dom";
 import { useCustomer } from "../../Context/Customer_context";
 
@@ -26,11 +27,11 @@ const Edit_customer = () => {
 
   const updateFieldAPI = async (field, value) => {
     const apiMap = {
-      fullName: "https://karigarbackend.vercel.app/api/v1/customer/update-fullName",
-      email: "https://karigarbackend.vercel.app/api/v1/customer/update-email",
-      phone: "https://karigarbackend.vercel.app/api/v1/customer/update-phone",
-      address: "https://karigarbackend.vercel.app/api/v1/customer/update-address",
-      profilePhoto: "https://karigarbackend.vercel.app/api/v1/customer/update-profile-photo",
+      fullName: "/api/v1/customer/update-fullName",
+      email: "/api/v1/customer/update-email",
+      phone: "/api/v1/customer/update-phone",
+      address: "/api/v1/customer/update-address",
+      profilePhoto: "/api/v1/customer/update-profile-photo",
     };
 
     try {
@@ -38,7 +39,7 @@ const Edit_customer = () => {
         const formData = new FormData();
         formData.append("profilePhoto", value);
 
-        const { data } = await axios.patch(apiMap[field], formData, {
+        const { data } = await api.patch(apiMap[field], formData, {
           headers: { Authorization: `Bearer ${token}` },
           withCredentials: true,
         });
@@ -48,7 +49,7 @@ const Edit_customer = () => {
         setProfilePhoto(data.data.profilePhoto);
         alert("Profile photo updated successfully!");
       } else {
-        await axios.patch(apiMap[field], { [field]: value }, {  headers: { Authorization: `Bearer ${token}` },
+        await api.patch(apiMap[field], { [field]: value }, {  headers: { Authorization: `Bearer ${token}` },
           withCredentials: true,
          });
 
