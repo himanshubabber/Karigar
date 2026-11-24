@@ -63,14 +63,24 @@ const corsOptions = {
 
 app.use(cors(corsOptions));*/
 
-// ✅ Active CORS: env-aware (dev allows localhost, prod allows Vercel frontend)
-const allowedOrigins =
-  process.env.NODE_ENV === "production"
-    ? [process.env.CORS_ORIGIN || "https://karigar-mu.vercel.app"]
-    : ["http://localhost:5173", "http://localhost:5174"];
+// ✅ Active CORS: regex-based — works for local dev + all Vercel preview URLs automatically
+const allowedOriginPatterns = [
+  /^http:\/\/localhost:(5173|5174)$/,         // local dev
+  /^https:\/\/karigar.*\.vercel\.app$/,        // all Vercel deployments (preview + prod)
+];
 
 app.use(cors({
-  origin: allowedOrigins,
+  origin: function (origin, callback) {
+    // allow requests with no origin (mobile apps, curl, Postman)
+    if (!origin) return callback(null, true);
+
+    const isAllowed = allowedOriginPatterns.some((pattern) => pattern.test(origin));
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      callback(new Error(`CORS blocked: ${origin}`));
+    }
+  },
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,

@@ -273,7 +273,7 @@ const Location_map = () => {
   const serviceRequestId = order?._id || localStorage.getItem("serviceRequestId");
   useEffect(() => {
     if (serviceRequestId) {
-      axios
+      api
         .post("/api/v1/serviceRequest/get-service-details", { serviceRequestId })
         .then((response) => {
           const resData = response.data?.data;
