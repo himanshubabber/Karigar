@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 // Using HashLoader for consistent branding across the site
 import { HashLoader } from "react-spinners";
-import { FaTools, FaArrowRight, FaPencilRuler } from "react-icons/fa";
+import { FaTools, FaArrowRight, FaPencilRuler, FaUserShield } from "react-icons/fa";
 
 // --- Data ---
 const occupations = [
@@ -184,6 +184,27 @@ const Landing_middle = () => {
                  <FaArrowRight size={18} className="icon-style" />
               </button>
             </div>
+
+            {/* 5. Admin Access (Discreetly placed below without distracting worker or customer) */}
+            <div className="d-flex justify-content-center mt-3 mt-md-4 animate-fade-up delay-400 px-3 px-sm-0">
+              <button
+                type="button"
+                className="btn d-flex align-items-center justify-content-center px-3 py-2 admin-portal-btn"
+                onClick={() => handleNavigation("/signin_admin")}
+                title="Restricted portal for Karigar administrators"
+              >
+                <FaUserShield size={16} className="me-2 text-secondary" />
+                <div className="text-start lh-1 me-2">
+                  <span style={{ fontSize: "0.7rem", color: "#6c757d", display: "block", marginBottom: "3px" }}>
+                    Platform Administration
+                  </span>
+                  <span className="fw-semibold" style={{ fontSize: "0.85rem", color: "#1e293b" }}>
+                    Admin Sign In
+                  </span>
+                </div>
+                <FaArrowRight size={12} className="text-muted ms-1" />
+              </button>
+            </div>
           </div>
         </header>
 
@@ -319,6 +340,25 @@ const Landing_middle = () => {
             outline: none !important;
         }
 
+        /* --- ADMIN PORTAL BUTTON (Discreet below worker & customer) --- */
+        .admin-portal-btn {
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+            transition: all 0.25s ease;
+            max-width: 280px;
+            width: 100%;
+        }
+        .admin-portal-btn:hover {
+            background-color: #f8fafc !important;
+            border-color: #cbd5e1 !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06) !important;
+            transform: translateY(-2px);
+        }
+        .admin-portal-btn:active {
+            transform: translateY(0);
+        }
 
         .service-card { border: none; border-radius: 16px; background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.03); transition: all 0.4s ease; cursor: pointer; overflow: hidden; border-top: 4px solid transparent; }
         .service-card:hover { box-shadow: 0 15px 30px rgba(0,50,100,0.1); transform: translateY(-8px); border-top-color: ${colors.accentBrand}; }

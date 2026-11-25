@@ -207,11 +207,18 @@ const Edit_admin = () => {
   };
 
   return (
-    <div className="container py-5" style={{ fontFamily: "Inter, sans-serif" }}>
-      <div
-        className="card shadow-lg p-4 p-md-5 bg-white border-0"
-        style={{ maxWidth: "680px", margin: "0 auto", borderRadius: "18px" }}
-      >
+    <div
+      className="min-vh-100 py-4 py-md-5 d-flex align-items-center justify-content-center p-3"
+      style={{
+        background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
+        fontFamily: "Inter, sans-serif",
+      }}
+    >
+      <div className="container" style={{ maxWidth: "720px" }}>
+        <div
+          className="card shadow-lg p-4 p-md-5 bg-white border-0"
+          style={{ width: "100%", borderRadius: "18px" }}
+        >
         {/* Header / Back Link */}
         <div className="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
           <button
@@ -448,6 +455,7 @@ const Edit_admin = () => {
         </form>
       </div>
     </div>
+  </div>
   );
 };
 
