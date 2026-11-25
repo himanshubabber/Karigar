@@ -27,6 +27,62 @@ const Edit_worker = () => {
   const [profilePhoto, setProfilePhoto] = useState(workerData?.profilePhoto || "");
   const [photoFile, setPhotoFile] = useState(null);
 
+  // Password change state
+  const [passwordForm, setPasswordForm] = useState({
+    oldPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [passwordFeedback, setPasswordFeedback] = useState(null);
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    if (!passwordForm.oldPassword || !passwordForm.newPassword) {
+      setPasswordFeedback({ type: "danger", message: "Please enter both current and new passwords." });
+      return;
+    }
+    if (passwordForm.newPassword.length < 6) {
+      setPasswordFeedback({ type: "danger", message: "New password must be at least 6 characters long." });
+      return;
+    }
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setPasswordFeedback({ type: "danger", message: "New passwords do not match." });
+      return;
+    }
+
+    const confirmed = window.confirm("Are you sure you want to update your worker account password?");
+    if (!confirmed) return;
+
+    setPasswordLoading(true);
+    setPasswordFeedback(null);
+
+    try {
+      await api.post(
+        "/api/v1/worker/change-password",
+        {
+          oldPassword: passwordForm.oldPassword,
+          newPassword: passwordForm.newPassword,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          withCredentials: true,
+        }
+      );
+
+      setPasswordForm({ oldPassword: "", newPassword: "", confirmPassword: "" });
+      setPasswordFeedback({ type: "success", message: "Password updated successfully!" });
+    } catch (err) {
+      console.error(err);
+      setPasswordFeedback({
+        type: "danger",
+        message: err.response?.data?.message || "Failed to change password. Please verify your current password.",
+      });
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
   const updateFieldAPI = async (field, value) => {
     const apiMap = {
       fullName: "/api/v1/worker/update-fullName",
@@ -237,8 +293,73 @@ const Edit_worker = () => {
             </div>
           </div>
 
+          {/* Security & Change Password Section */}
+          <div className="border-top pt-4 mt-4">
+            <h5 className="fw-bold mb-3 text-dark">Security & Password</h5>
+
+            {passwordFeedback && (
+              <div
+                className={`alert alert-${passwordFeedback.type} py-2 px-3 small mb-3`}
+                role="alert"
+              >
+                {passwordFeedback.message}
+              </div>
+            )}
+
+            <div className="mb-3">
+              <label className="form-label small fw-semibold text-muted">Current / Temporary Password</label>
+              <input
+                type="password"
+                className="form-control"
+                placeholder="Enter password (e.g. from reset email)"
+                value={passwordForm.oldPassword}
+                onChange={(e) =>
+                  setPasswordForm((prev) => ({ ...prev, oldPassword: e.target.value }))
+                }
+              />
+            </div>
+
+            <div className="row g-2 mb-3">
+              <div className="col-12 col-md-6">
+                <label className="form-label small fw-semibold text-muted">New Password</label>
+                <input
+                  type="password"
+                  className="form-control"
+                  placeholder="Min 6 characters"
+                  value={passwordForm.newPassword}
+                  onChange={(e) =>
+                    setPasswordForm((prev) => ({ ...prev, newPassword: e.target.value }))
+                  }
+                />
+              </div>
+              <div className="col-12 col-md-6">
+                <label className="form-label small fw-semibold text-muted">Confirm New Password</label>
+                <input
+                  type="password"
+                  className="form-control"
+                  placeholder="Re-type new password"
+                  value={passwordForm.confirmPassword}
+                  onChange={(e) =>
+                    setPasswordForm((prev) => ({ ...prev, confirmPassword: e.target.value }))
+                  }
+                />
+              </div>
+            </div>
+
+            <div className="d-flex justify-content-end mb-3">
+              <button
+                type="button"
+                className="btn btn-outline-primary btn-sm px-3"
+                onClick={handleChangePassword}
+                disabled={passwordLoading || !passwordForm.oldPassword || !passwordForm.newPassword}
+              >
+                {passwordLoading ? "Updating..." : "Update Password"}
+              </button>
+            </div>
+          </div>
+
           {/* Go to Profile */}
-          <div className="text-end mt-4">
+          <div className="text-end mt-4 pt-3 border-top">
             <button
               type="button"
               className="btn btn-primary"

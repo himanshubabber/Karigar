@@ -7,9 +7,18 @@ import { Otp } from "../models/otp.model.js";
 import jwt from "jsonwebtoken";
 import { ServiceRequest } from "../models/serviceRequest.model.js";
 import crypto from "crypto";
+import nodemailer from "nodemailer";
 
 import { OAuth2Client } from "google-auth-library";
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+const emailTransporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL,
+    pass: process.env.EMAIL_PASS,
+  },
+});
 
 
 const generateAccessAndRefreshTokens = async(workerId)=>{
@@ -279,6 +288,14 @@ const loginWorker = asyncHandler(async (req, res) => {
   
 const changeCurrentPassword = asyncHandler(async(req, res) => {
     const {oldPassword, newPassword} = req.body
+
+    if (!oldPassword || !newPassword) {
+      throw new ApiError(400, "Both current password and new password are required");
+    }
+
+    if (newPassword.length < 6) {
+      throw new ApiError(400, "New password must be at least 6 characters long");
+    }
 
     const worker = await Worker.findById(req.worker?._id)
     const isPasswordCorrect = await worker.isPasswordCorrect(oldPassword)
@@ -578,6 +595,50 @@ const rateWorker= asyncHandler(async (req,res)=>{
     res.status(200).json(new ApiResponse(200, { serviceRequest, worker }, "Rating submitted successfully"));
 })
 
+const forgotPasswordWorker = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+  if (!email || !email.trim()) {
+    throw new ApiError(400, "Registered email address is required");
+  }
+
+  const cleanEmail = email.trim().toLowerCase();
+  const worker = await Worker.findOne({ email: cleanEmail });
+  if (!worker) {
+    throw new ApiError(404, "No worker account found with this email");
+  }
+
+  // Generate readable temporary password
+  const tempPassword = `Kari@${crypto.randomBytes(3).toString("hex")}`;
+  worker.password = tempPassword;
+  await worker.save({ validateBeforeSave: false });
+
+  try {
+    await emailTransporter.sendMail({
+      from: `"Karigar Support" <${process.env.EMAIL}>`,
+      to: worker.email,
+      subject: "Your Karigar Worker Login Password",
+      text: `Hello ${worker.fullName || "Worker"},
+
+You requested a password reset for your Karigar Worker account.
+
+Your new password is:
+${tempPassword}
+
+Please use this password to sign in to your Karigar Worker account.
+After logging in, you can change your password anytime by navigating to "Edit Profile" -> "Security & Password".
+
+If you did not make this request, please contact Karigar support immediately.
+
+Best regards,
+Karigar Team`,
+    });
+  } catch (err) {
+    console.error("Failed to dispatch worker forgot-password email:", err);
+    throw new ApiError(500, "Failed to send password email. Please verify server email setup.");
+  }
+
+  return res.status(200).json(new ApiResponse(200, {}, "A new password has been sent to your registered email address"));
+});
 
 export{
     registerWorker,
@@ -597,4 +658,5 @@ export{
     verifyOtpForService,
     getWorkerById,
     rateWorker,
+    forgotPasswordWorker,
 }

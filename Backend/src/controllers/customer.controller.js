@@ -9,6 +9,7 @@ import jwt from "jsonwebtoken";
 import twilio from "twilio";
 import { OAuth2Client } from "google-auth-library";
 import nodemailer from "nodemailer";
+import crypto from "crypto";
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -197,6 +198,14 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 
 const changeCurrentPassword = asyncHandler(async (req, res) => {
   const { oldPassword, newPassword } = req.body;
+
+  if (!oldPassword || !newPassword) {
+    throw new ApiError(400, "Both current password and new password are required");
+  }
+
+  if (newPassword.length < 6) {
+    throw new ApiError(400, "New password must be at least 6 characters long");
+  }
 
   const customer = await Customer.findById(req.customer?._id);
   const isPasswordCorrect = await customer.isPasswordCorrect(oldPassword);
@@ -461,6 +470,51 @@ const getCustomerById = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, customer, "customer fetched"));
 });
 
+const forgotPasswordCustomer = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+  if (!email || !email.trim()) {
+    throw new ApiError(400, "Registered email address is required");
+  }
+
+  const cleanEmail = email.trim().toLowerCase();
+  const customer = await Customer.findOne({ email: cleanEmail });
+  if (!customer) {
+    throw new ApiError(404, "No customer account found with this email");
+  }
+
+  // Generate readable temporary password
+  const tempPassword = `Kari@${crypto.randomBytes(3).toString("hex")}`;
+  customer.password = tempPassword;
+  await customer.save({ validateBeforeSave: false });
+
+  try {
+    await emailTransporter.sendMail({
+      from: `"Karigar Support" <${process.env.EMAIL}>`,
+      to: customer.email,
+      subject: "Your Karigar Login Password",
+      text: `Hello ${customer.fullName || "Customer"},
+
+You requested a password reset for your Karigar account.
+
+Your new password is:
+${tempPassword}
+
+Please use this password to sign in to your Karigar account.
+After logging in, you can change your password anytime by navigating to "Edit Profile" -> "Security & Password".
+
+If you did not make this request, please contact Karigar support immediately.
+
+Best regards,
+Karigar Team`,
+    });
+  } catch (err) {
+    console.error("Failed to dispatch forgot-password email:", err);
+    throw new ApiError(500, "Failed to send password email. Please verify server email setup.");
+  }
+
+  return res.status(200).json(new ApiResponse(200, {}, "A new password has been sent to your registered email address"));
+});
+
 export {
   registerCustomer,
   loginCustomer,
@@ -476,4 +530,5 @@ export {
   updateFullName,
   generateOtpobj,
   getCustomerById,
+  forgotPasswordCustomer,
 };
