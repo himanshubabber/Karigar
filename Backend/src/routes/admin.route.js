@@ -24,6 +24,7 @@ import {
   updateAdminProfilePhoto,
   changeAdminPassword,
   updateAdminProfile,
+  forgotPasswordAdmin,
 } from "../controllers/admin.controller.js";
 import { seedDemoData } from "../controllers/demoData.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
@@ -41,6 +42,7 @@ router.route("/update-profile").patch(verifyAdminJWT, updateAdminProfile);
 
 router.route("/google-login").post(loginAdminWithGoogle);
 router.route("/login").post(loginAdminWithEmail);
+router.route("/forgot-password").post(forgotPasswordAdmin);
 router.route("/request-access").post(createAdminRequest);
 router.route("/seed-demo-data").post(verifyAdminJWT, authorizeAdmin("master"), seedDemoData);
 router.route("/summary").get(verifyAdminJWT, authorizeAdmin("viewer", "suggester", "master"), getAdminSummary);

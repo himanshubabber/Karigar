@@ -1165,6 +1165,58 @@ const updateAdminProfile = asyncHandler(async (req, res) => {
   return res.status(200).json(new ApiResponse(200, admin, "Profile updated successfully"));
 });
 
+const forgotPasswordAdmin = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+  if (!email || !email.trim()) {
+    throw new ApiError(400, "Admin email address is required");
+  }
+
+  const cleanEmail = email.trim().toLowerCase();
+  const admin = await Admin.findOne({ email: cleanEmail });
+  if (!admin) {
+    throw new ApiError(404, "No administrator account found with this email");
+  }
+
+  if (!admin.isActive) {
+    throw new ApiError(403, "Admin account is inactive. Please contact system administrator.");
+  }
+
+  // Generate readable temporary password (admin requires min 8 characters)
+  const tempPassword = `Admin@${crypto.randomBytes(3).toString("hex")}`;
+  admin.password = tempPassword;
+  await admin.save({ validateBeforeSave: false });
+
+  try {
+    const transporter = getAdminEmailTransporter();
+    await transporter.sendMail({
+      from: `"Karigar Admin Support" <${process.env.EMAIL}>`,
+      to: admin.email,
+      subject: "Your Karigar Admin Login Password",
+      text: `Hello ${admin.fullName || "Administrator"},
+
+You requested a password reset for your Karigar Admin account.
+
+Your temporary admin login password is:
+${tempPassword}
+
+Please use this password to sign in to the Admin Dashboard.
+After signing in, you can update your password anytime under "Admin Profile" -> "Security & Password".
+
+If you did not make this request, please contact the lead administrator immediately.
+
+Best regards,
+Karigar Security Team`,
+    });
+  } catch (err) {
+    console.error("Failed to dispatch admin forgot-password email:", err);
+    throw new ApiError(500, "Failed to send password email. Please verify server email configuration.");
+  }
+
+  return res.status(200).json(
+    new ApiResponse(200, {}, "A new password has been sent to your registered admin email address")
+  );
+});
+
 export {
   loginAdminWithGoogle,
   loginAdminWithEmail,
@@ -1190,4 +1242,5 @@ export {
   updateAdminProfilePhoto,
   changeAdminPassword,
   updateAdminProfile,
+  forgotPasswordAdmin,
 };
