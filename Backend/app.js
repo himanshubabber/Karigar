@@ -39,13 +39,12 @@ await connectDB();
 //   allowedHeaders: ["Content-Type", "Authorization"]
 // }));
 
-
-app.use(cors({
-  origin: 'https://karigar-mu.vercel.app',
-  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true, 
-}));
+// app.use(cors({
+//   origin: 'https://karigar-mu.vercel.app',
+//   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+//   allowedHeaders: ["Content-Type", "Authorization"],
+//   credentials: true, 
+// }));
 
 //  app.options("*", cors());
 
@@ -63,6 +62,29 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));*/
+
+// ✅ Active CORS: regex-based — works for local dev + all Vercel preview URLs automatically
+const allowedOriginPatterns = [
+  /^http:\/\/localhost:(5173|5174)$/,         // local dev
+  /^https:\/\/karigar.*\.vercel\.app$/,        // all Vercel deployments (preview + prod)
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    // allow requests with no origin (mobile apps, curl, Postman)
+    if (!origin) return callback(null, true);
+
+    const isAllowed = allowedOriginPatterns.some((pattern) => pattern.test(origin));
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      callback(new Error(`CORS blocked: ${origin}`));
+    }
+  },
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true,
+}));
 
 
 // Middleware

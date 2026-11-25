@@ -1,5 +1,6 @@
 import React, { useState, useRef } from "react";
 import axios from "axios";
+import api from "../../api.js";
 import { useNavigate } from "react-router-dom";
 import { useServiceReq } from "../../Context/Service_req_context.jsx";
 import { useOtp } from "../../Context/Otp_context.jsx";
@@ -130,7 +131,7 @@ const Service_req_form = () => {
         audioFormData.append("file", audioBlob);
         audioFormData.append("upload_preset", "ml_default");
 
-        const uploadRes = await axios.post(
+        const uploadRes = await api.post(
           `https://api.cloudinary.com/v1_1/dqzymzibc/auto/upload`,
           audioFormData
         );
@@ -138,8 +139,8 @@ const Service_req_form = () => {
       }
       setLoading(true);
 
-      const res = await axios.post(
-        "https://karigarbackend.vercel.app/api/v1/serviceRequest/create",
+      const res = await api.post(
+        "/api/v1/serviceRequest/create",
         {
           category: toTitleCase(category),
           description,
@@ -164,8 +165,8 @@ const Service_req_form = () => {
       localStorage.setItem("selectedReq", JSON.stringify(serviceRequestData));
       localStorage.setItem("serviceRequestId", serviceRequestId);
 
-      const otpRes = await axios.post(
-        "https://karigarbackend.vercel.app/api/v1/customer/generate-otp",
+      const otpRes = await api.post(
+        "/api/v1/customer/generate-otp",
         { serviceRequestId },
         {
           headers: {

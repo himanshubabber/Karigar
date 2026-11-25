@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import api from "../../api.js";
 import { useNavigate } from "react-router-dom";
 import { useWorker } from "../../Context/Worker_context";
 import Spinner from "../Style/Spinner";
@@ -17,7 +18,7 @@ const History_worker = () => {
   const { updateSelectedReq } = useServiceReq();
   const fetchWorkerHistory = async () => {
     try {
-      const { data } = await axios.get("https://karigarbackend.vercel.app/api/v1/serviceRequest/history_worker", {
+      const { data } = await api.get("/api/v1/serviceRequest/history_worker", {
         headers: { Authorization: `Bearer ${token}` },
         withCredentials: true,
       });
@@ -32,8 +33,8 @@ const History_worker = () => {
 
   const handleGobackbutton = async (id) => {
     try {
-      const fullDetails = await axios.post(
-        "https://karigarbackend.vercel.app/api/v1/serviceRequest/get-service-details",
+      const fullDetails = await api.post(
+        "/api/v1/serviceRequest/get-service-details",
         { serviceRequestId: id },
         { withCredentials: true }
       );
@@ -66,7 +67,7 @@ const History_worker = () => {
       for (const id of uniqueCustomerIds) {
         if (newMap[id]) continue;
         try {
-          const { data } = await axios.post("https://karigarbackend.vercel.app/api/v1/customer/customer-info", { id });
+          const { data } = await api.post("/api/v1/customer/customer-info", { id });
           console.log("customer id",data);
           newMap[id] = data?.data;
         } catch (err) {
