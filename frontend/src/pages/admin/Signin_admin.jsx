@@ -66,78 +66,96 @@ const Signin_admin = () => {
       navigate("/admin/dashboard", { state: admin });
     } catch (err) {
       console.error("Admin login failed:", err);
-      alert("Admin login failed: " + (err.response?.data?.message || err.message));
+      setErrorMsg(err.response?.data?.message || err.message || "Admin login failed");
     } finally {
       setLoading(false);
     }
   };
 
+  const [errorMsg, setErrorMsg] = useState("");
+
   return (
-    <div className="min-vh-100 d-flex align-items-center justify-content-center" style={{ background: "linear-gradient(135deg, #eef2ff 0%, #f8fafc 100%)" }}>
-      <div className="card shadow-lg rounded-4 border-0" style={{ width: "320px" }}>
-        <div className="card-body p-4">
+    <div className="min-vh-100 d-flex align-items-center justify-content-center p-3" style={{ background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)" }}>
+      <div className="card shadow-lg rounded-4 border-0" style={{ width: "100%", maxWidth: "440px" }}>
+        <div className="card-body p-4 p-md-5">
           <div className="text-center mb-4">
-            <h3 className="mb-2">Admin Login</h3>
-            <p className="text-muted mb-0">Use your authorized Google or email/password account to access the dashboard.</p>
+            <div className="d-inline-flex p-3 rounded-4 bg-primary bg-opacity-10 text-primary fs-3 mb-3">
+              ⚡
+            </div>
+            <h3 className="fw-bold text-dark mb-1">Karigar Admin</h3>
+            <p className="text-muted small mb-0">Sign in with an authorized administrator account to access management tools.</p>
           </div>
-          <div className="d-flex gap-2 justify-content-center mb-3">
+
+          {errorMsg && (
+            <div className="alert alert-danger alert-dismissible fade show small py-2 px-3 mb-3" role="alert">
+              <span>{errorMsg}</span>
+              <button type="button" className="btn-close p-2" onClick={() => setErrorMsg("")}></button>
+            </div>
+          )}
+
+          <div className="d-flex p-1 bg-light rounded-pill border justify-content-center mb-4">
             <button
               type="button"
-              className={`btn btn-sm ${authMode === "google" ? "btn-primary" : "btn-outline-primary"}`}
-              onClick={() => setAuthMode("google")}
+              className={`btn btn-sm rounded-pill w-50 fw-semibold ${authMode === "google" ? "btn-primary shadow-sm" : "text-muted"}`}
+              onClick={() => { setAuthMode("google"); setErrorMsg(""); }}
             >
-              Google
+              Google Login
             </button>
             <button
               type="button"
-              className={`btn btn-sm ${authMode === "email" ? "btn-primary" : "btn-outline-primary"}`}
-              onClick={() => setAuthMode("email")}
+              className={`btn btn-sm rounded-pill w-50 fw-semibold ${authMode === "email" ? "btn-primary shadow-sm" : "text-muted"}`}
+              onClick={() => { setAuthMode("email"); setErrorMsg(""); }}
             >
-              Email
+              Email & Password
             </button>
           </div>
+
           {authMode === "google" ? (
-            <div className="d-flex justify-content-center py-3">
+            <div className="d-flex justify-content-center py-2">
               <GoogleLogin
                 onSuccess={handleGoogleLogin}
-                onError={() => console.log("Google login failed")}
+                onError={() => setErrorMsg("Google authentication failed. Please try again.")}
                 theme="filled_blue"
                 size="large"
+                width={340}
               />
             </div>
           ) : (
             <form onSubmit={handleEmailLogin}>
               <div className="mb-3">
-                <label className="form-label">Email</label>
+                <label className="form-label small fw-semibold text-muted">Admin Email</label>
                 <input
                   type="email"
                   className="form-control"
+                  placeholder="admin@example.com"
                   value={form.email}
                   onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
                   required
                 />
               </div>
-              <div className="mb-3">
-                <label className="form-label">Password</label>
+              <div className="mb-4">
+                <label className="form-label small fw-semibold text-muted">Password</label>
                 <input
                   type="password"
                   className="form-control"
+                  placeholder="••••••••"
                   value={form.password}
                   onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))}
                   required
                 />
               </div>
-              <button type="submit" className="btn btn-primary w-100" disabled={loading}>
-                {loading ? "Signing in..." : "Sign in with Email"}
+              <button type="submit" className="btn btn-primary w-100 py-2 fw-semibold" disabled={loading}>
+                {loading ? "Signing in..." : "Sign in to Dashboard"}
               </button>
             </form>
           )}
-          <div className="mt-4 text-center text-secondary small">
-            Only approved admin emails can sign in. If you see an authorization error, contact the system owner.
+
+          <div className="mt-4 pt-3 border-top text-center text-muted small" style={{ fontSize: "11px" }}>
+            Access is restricted to authorized platform administrators.
           </div>
-          <div className="mt-3 text-center">
-            <Link to="/admin/request-access" className="text-decoration-none">
-              Request admin access
+          <div className="mt-2 text-center">
+            <Link to="/admin/request-access" className="text-decoration-none small fw-semibold">
+              Need access? Submit an elevation request &rarr;
             </Link>
           </div>
         </div>

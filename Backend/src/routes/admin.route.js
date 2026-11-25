@@ -4,11 +4,15 @@ import {
   loginAdminWithEmail,
   getAdminSummary,
   getAdminUsers,
+  getAllAdmins,
+  toggleAdminActive,
+  updateAdminRole,
   blockUser,
   sendMessage,
   getAdminMessages,
   getAdminRequests,
   approveAdminRequest,
+  rejectAdminRequest,
   createAdminRequest,
   runAdminApiCall,
   commentOnEntity,
@@ -25,6 +29,9 @@ router.route("/request-access").post(createAdminRequest);
 router.route("/seed-demo-data").post(verifyAdminJWT, authorizeAdmin("master"), seedDemoData);
 router.route("/summary").get(verifyAdminJWT, authorizeAdmin("viewer", "suggester", "master"), getAdminSummary);
 router.route("/users").get(verifyAdminJWT, authorizeAdmin("viewer", "suggester", "master"), getAdminUsers);
+router.route("/admins").get(verifyAdminJWT, authorizeAdmin("viewer", "suggester", "master"), getAllAdmins);
+router.route("/admins/:adminId/toggle-active").patch(verifyAdminJWT, authorizeAdmin("master"), toggleAdminActive);
+router.route("/admins/:adminId/role").patch(verifyAdminJWT, authorizeAdmin("master"), updateAdminRole);
 router.route("/comment").post(verifyAdminJWT, authorizeAdmin("suggester", "master"), commentOnEntity);
 router.route("/edit").patch(verifyAdminJWT, authorizeAdmin("master"), editEntity);
 router.route("/api-call").post(verifyAdminJWT, authorizeAdmin("master"), runAdminApiCall);
@@ -33,5 +40,6 @@ router.route("/messages").get(verifyAdminJWT, authorizeAdmin("suggester", "maste
 router.route("/block-user").patch(verifyAdminJWT, authorizeAdmin("master"), blockUser);
 router.route("/requests").get(verifyAdminJWT, authorizeAdmin("master"), getAdminRequests);
 router.route("/requests/:requestId/approve").patch(verifyAdminJWT, authorizeAdmin("master"), approveAdminRequest);
+router.route("/requests/:requestId/reject").patch(verifyAdminJWT, authorizeAdmin("master"), rejectAdminRequest);
 
 export default router;
