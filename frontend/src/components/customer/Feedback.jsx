@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { FaStar } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-
+import api from "../../api.js";
 const Feedback = ({ serviceRequestId, onSubmit }) => {
   const [rating, setRating] = useState(0);
   const [hover, setHover] = useState(null);
@@ -20,7 +20,7 @@ const Feedback = ({ serviceRequestId, onSubmit }) => {
     setError(null);
 
     try {
-      await axios.post("https://karigarbackend.vercel.app/api/v1/worker/rate", {
+      await api.post("/api/v1/worker/rate", {
         serviceRequestId,
         rating,
       });

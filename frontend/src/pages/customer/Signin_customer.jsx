@@ -1,9 +1,8 @@
 import { useState } from "react";
-import axios from "axios";
+import api from "../../api.js";
 import { useNavigate } from "react-router-dom";
 import { useCustomer } from "../../Context/Customer_context";
 import Spinner from "../../components/Style/Spinner.jsx";
-// import api from "../../../api.js"
 import { GoogleLogin } from "@react-oauth/google";
 import {jwtDecode} from "jwt-decode";
 
@@ -34,7 +33,7 @@ const Signin_customer = () => {
     console.log(e);
 
     try {
-      const res = await axios.post("https://karigarbackend.vercel.app/api/v1/customer/login", form, {
+      const res = await api.post("/api/v1/customer/login", form, {
         withCredentials: true,
       });
 
@@ -70,8 +69,8 @@ const Signin_customer = () => {
 
       if (!decoded.email) throw new Error("Google profile with email is required");
 
-      const res = await axios.post(
-        "https://karigarbackend.vercel.app/api/v1/customer/google-login",
+      const res = await api.post(
+        "/api/v1/customer/google-login",
         { credential },
         { withCredentials: true }
       );

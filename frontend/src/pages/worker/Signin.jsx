@@ -1,5 +1,6 @@
 import { useState } from "react";
 import axios from "axios";
+import api from "../../api.js";
 import { useNavigate } from "react-router-dom";
 import { useWorker } from "../../Context/Worker_context";
 import Spinner from "../../components/Style/Spinner.jsx";
@@ -37,7 +38,7 @@ const Signin_worker = () => {
     setLoading(true);
 
     try {
-      const res = await axios.post("https://karigarbackend.vercel.app/api/v1/worker/login", form, {
+      const res = await api.post("/api/v1/worker/login", form, {
         withCredentials: true,
       });
 
@@ -68,8 +69,8 @@ const Signin_worker = () => {
 
       if (!decoded.email) throw new Error("Google profile with email is required");
 
-      const res = await axios.post(
-        "https://karigarbackend.vercel.app/api/v1/worker/google-login",
+      const res = await api.post(
+        "/api/v1/worker/google-login",
         { credential },
         { withCredentials: true }
       );
