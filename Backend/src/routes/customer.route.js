@@ -14,6 +14,7 @@ import {
     updateFullName,
     generateOtpobj,
     getCustomerById,
+    forgotPasswordCustomer,
 } from "../controllers/customer.controller.js";
 import {upload} from "../middlewares/multer.middleware.js"
 import verifyJWT from "../middlewares/customerAuth.middleware.js";
@@ -24,6 +25,7 @@ const router = Router()
 router.route("/register").post(upload.single("profilePhoto"),registerCustomer)
 router.route("/login").post(loginCustomer)
 router.route("/google-login").post(loginCustomerWithGoogle)
+router.route("/forgot-password").post(forgotPasswordCustomer)
 
 //secured routes
 router.route("/logout").post(verifyJWT,  logoutCustomer)
