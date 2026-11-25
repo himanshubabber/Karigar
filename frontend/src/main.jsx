@@ -24,6 +24,7 @@ import Edit_worker from './components/worker/Edit_worker.jsx';
 import Signin_customer from './pages/customer/Signin_customer.jsx';
 
 import Edit_customer from './components/customer/Edit_customer.jsx';
+import Edit_admin from './components/admin/Edit_admin.jsx';
 import History_customer from './components/customer/History_customer.jsx';
 import History_worker from './components/worker/History_worker.jsx';
 import Signin_admin from './pages/admin/Signin_admin.jsx';
@@ -165,6 +166,14 @@ function AppRouter() {
       element: (
         <ProtectedRoute_admin isAuthenticated={isAdminAuthenticated}>
           <AdminDashboard />
+        </ProtectedRoute_admin>
+      ),
+    },
+    {
+      path: "/edit_admin",
+      element: (
+        <ProtectedRoute_admin isAuthenticated={isAdminAuthenticated}>
+          <Edit_admin />
         </ProtectedRoute_admin>
       ),
     },

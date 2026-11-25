@@ -3,6 +3,7 @@ import axios from "axios";
 import { useAdmin } from "../../Context/Admin_context.jsx";
 import ProtectedRoute_admin from "../../components/ProtectedRoute_admin.jsx";
 import { useNavigate } from "react-router-dom";
+import { MdOutlineEdit } from "react-icons/md";
 import {
   FaUsers,
   FaWrench,
@@ -44,6 +45,25 @@ const tabs = [
 ];
 
 const apiSuggestions = [
+  // --- ADMIN ACTION DISPATCHER (UNIFIED API - ZERO TOKEN BARRIER) ---
+  { group: "Admin Action Dispatcher", label: "Action: Generate Customer OTP", url: "/api/v1/admin/action", method: "POST", sample: JSON.stringify({ action: "generate-otp", payload: { serviceRequestId: "<serviceRequestId>" } }, null, 2) },
+  { group: "Admin Action Dispatcher", label: "Action: Verify Service OTP", url: "/api/v1/admin/action", method: "POST", sample: JSON.stringify({ action: "verify-otp", payload: { serviceRequestId: "<serviceRequestId>", otp: "123456" } }, null, 2) },
+  { group: "Admin Action Dispatcher", label: "Action: Update Job Status", url: "/api/v1/admin/action", method: "POST", sample: JSON.stringify({ action: "update-job-status", payload: { serviceRequestId: "<serviceRequestId>", status: "completed" } }, null, 2) },
+  { group: "Admin Action Dispatcher", label: "Action: Set Repair Quote Amount", url: "/api/v1/admin/action", method: "POST", sample: JSON.stringify({ action: "set-quote-amount", payload: { serviceRequestId: "<serviceRequestId>", quoteAmount: 750 } }, null, 2) },
+  { group: "Admin Action Dispatcher", label: "Action: Accept Repair Quote", url: "/api/v1/admin/action", method: "POST", sample: JSON.stringify({ action: "accept-repair-quote", payload: { serviceRequestId: "<serviceRequestId>" } }, null, 2) },
+  { group: "Admin Action Dispatcher", label: "Action: Reject Repair Quote", url: "/api/v1/admin/action", method: "POST", sample: JSON.stringify({ action: "reject-repair-quote", payload: { serviceRequestId: "<serviceRequestId>", reason: "Repair quote exceeds approved budget" } }, null, 2) },
+  { group: "Admin Action Dispatcher", label: "Action: Cancel Service Request", url: "/api/v1/admin/action", method: "POST", sample: JSON.stringify({ action: "cancel-service-request", payload: { serviceRequestId: "<serviceRequestId>", reason: "Customer requested cancellation via phone", cancelledBy: "customer" } }, null, 2) },
+  { group: "Admin Action Dispatcher", label: "Action: Mark Payment Received", url: "/api/v1/admin/action", method: "POST", sample: JSON.stringify({ action: "mark-payment", payload: { serviceRequestId: "<serviceRequestId>", paymentType: "cash", amount: 650 } }, null, 2) },
+  { group: "Admin Action Dispatcher", label: "Action: Get Entity Details (Customer/Worker/Request)", url: "/api/v1/admin/action", method: "POST", sample: JSON.stringify({ action: "get-entity", payload: { entityType: "customer", email: "user@example.com" } }, null, 2) },
+  { group: "Admin Action Dispatcher", label: "Action: Update Customer Profile", url: "/api/v1/admin/action", method: "POST", sample: JSON.stringify({ action: "update-customer", payload: { customerId: "<customerId>", updates: { fullName: "Rohan S. Sharma", phone: "9811223344" } } }, null, 2) },
+  { group: "Admin Action Dispatcher", label: "Action: Reset Customer Password", url: "/api/v1/admin/action", method: "POST", sample: JSON.stringify({ action: "reset-password", payload: { userType: "customer", email: "customer@example.com", newPassword: "NewSecurePassword123" } }, null, 2) },
+  { group: "Admin Action Dispatcher", label: "Action: Update Worker Profile", url: "/api/v1/admin/action", method: "POST", sample: JSON.stringify({ action: "update-worker", payload: { workerId: "<workerId>", updates: { categories: ["Electrician", "Plumber"] } } }, null, 2) },
+  { group: "Admin Action Dispatcher", label: "Action: Update Worker Location (GPS)", url: "/api/v1/admin/action", method: "POST", sample: JSON.stringify({ action: "update-worker-location", payload: { workerId: "<workerId>", latitude: 28.4595, longitude: 77.0266 } }, null, 2) },
+  { group: "Admin Action Dispatcher", label: "Action: Reset Worker Password", url: "/api/v1/admin/action", method: "POST", sample: JSON.stringify({ action: "reset-password", payload: { userType: "worker", email: "worker@example.com", newPassword: "NewWorkerPassword123" } }, null, 2) },
+  { group: "Admin Action Dispatcher", label: "Action: Rate Worker for Service", url: "/api/v1/admin/action", method: "POST", sample: JSON.stringify({ action: "rate-worker", payload: { serviceRequestId: "<serviceRequestId>", rating: 5, review: "Great on-time repair work" } }, null, 2) },
+  { group: "Admin Action Dispatcher", label: "Action: Assign Worker to Request", url: "/api/v1/admin/action", method: "POST", sample: JSON.stringify({ action: "assign-worker", payload: { serviceRequestId: "<serviceRequestId>", workerId: "<workerId>" } }, null, 2) },
+  { group: "Admin Action Dispatcher", label: "Action: Get User History (Customer/Worker)", url: "/api/v1/admin/action", method: "POST", sample: JSON.stringify({ action: "get-history", payload: { userType: "customer", id: "<customerId>" } }, null, 2) },
+
   // --- ADMIN MANAGEMENT ---
   { group: "Admin Management", label: "Analytics Summary", url: "/api/v1/admin/summary", method: "GET", sample: "" },
   { group: "Admin Management", label: "Get All Users & Entities", url: "/api/v1/admin/users", method: "GET", sample: "" },
@@ -57,47 +77,73 @@ const apiSuggestions = [
   { group: "Admin Management", label: "Send Message / Email", url: "/api/v1/admin/message", method: "POST", sample: JSON.stringify({ toEmail: "user@example.com", subject: "Karigar Support Update", body: "Your service request quote has been approved." }, null, 2) },
   { group: "Admin Management", label: "Get Message History Log", url: "/api/v1/admin/messages", method: "GET", sample: "" },
   { group: "Admin Management", label: "Get Elevation Requests", url: "/api/v1/admin/requests", method: "GET", sample: "" },
+  { group: "Admin Management", label: "Create Admin Elevation Request", url: "/api/v1/admin/request", method: "POST", sample: JSON.stringify({ email: "candidate@example.com", requestedRole: "suggester", reason: "Requires access to review customer tickets", requestedBy: "Lead Admin" }, null, 2) },
   { group: "Admin Management", label: "Approve Admin Request", url: "/api/v1/admin/requests/<requestId>/approve", method: "PATCH", sample: JSON.stringify({ approvedRole: "master" }, null, 2) },
-  { group: "Admin Management", label: "Reject Admin Request", url: "/api/v1/admin/requests/<requestId>/reject", method: "PATCH", sample: "" },
-  { group: "Admin Management", label: "Seed Demo Platform Data", url: "/api/v1/admin/seed-demo-data", method: "POST", sample: "" },
+  { group: "Admin Management", label: "Reject Admin Request", url: "/api/v1/admin/requests/<requestId>/reject", method: "PATCH", sample: JSON.stringify({ reason: "Applicant does not meet security requirements" }, null, 2) },
+  { group: "Admin Management", label: "Seed Demo Platform Data", url: "/api/v1/admin/seed-demo-data", method: "POST", sample: JSON.stringify({ clearExisting: false, customerCount: 3, workerCount: 3, requestCount: 5 }, null, 2) },
+  { group: "Admin Management", label: "Get Current Admin Profile", url: "/api/v1/admin/current-user", method: "GET", sample: "" },
+  { group: "Admin Management", label: "Update Admin Full Name", url: "/api/v1/admin/update-fullName", method: "PATCH", sample: JSON.stringify({ fullName: "Himanshu Singh" }, null, 2) },
+  { group: "Admin Management", label: "Change Admin Password", url: "/api/v1/admin/change-password", method: "POST", sample: JSON.stringify({ oldPassword: "CurrentPassword123", newPassword: "NewSecurePassword456" }, null, 2) },
 
   // --- CUSTOMER APIs ---
   { group: "Customer APIs", label: "Customer Login", url: "/api/v1/customer/login", method: "POST", sample: JSON.stringify({ email: "customer@example.com", password: "Password123" }, null, 2) },
   { group: "Customer APIs", label: "Customer Register", url: "/api/v1/customer/register", method: "POST", sample: JSON.stringify({ fullName: "Rohan Sharma", email: "rohan@example.com", phone: "9876543210", password: "Password123", address: "Sector 14, Gurugram" }, null, 2) },
+  { group: "Customer APIs", label: "Customer Google Login", url: "/api/v1/customer/google-login", method: "POST", sample: JSON.stringify({ email: "customer@example.com", fullName: "Rohan Sharma", googleId: "google_sub_12345" }, null, 2) },
   { group: "Customer APIs", label: "Current Customer Profile", url: "/api/v1/customer/current-user", method: "GET", sample: "" },
   { group: "Customer APIs", label: "Get Customer by ID", url: "/api/v1/customer/customer-info", method: "POST", sample: JSON.stringify({ customerId: "<customerId>" }, null, 2) },
   { group: "Customer APIs", label: "Update Customer Full Name", url: "/api/v1/customer/update-fullName", method: "PATCH", sample: JSON.stringify({ fullName: "Rohan S. Sharma" }, null, 2) },
   { group: "Customer APIs", label: "Update Customer Phone", url: "/api/v1/customer/update-phone", method: "PATCH", sample: JSON.stringify({ phone: "9811223344" }, null, 2) },
   { group: "Customer APIs", label: "Update Customer Address", url: "/api/v1/customer/update-address", method: "PATCH", sample: JSON.stringify({ address: "Flat 402, DLF Phase 3, Gurugram" }, null, 2) },
-  { group: "Customer APIs", label: "Generate Customer OTP", url: "/api/v1/customer/generate-otp", method: "POST", sample: "" },
-  { group: "Customer APIs", label: "Refresh Access Token", url: "/api/v1/customer/refresh-token", method: "POST", sample: "" },
+  { group: "Customer APIs", label: "Update Customer Email", url: "/api/v1/customer/update-email", method: "PATCH", sample: JSON.stringify({ email: "rohan.new@example.com" }, null, 2) },
+  { group: "Customer APIs", label: "Change Customer Password", url: "/api/v1/customer/change-password", method: "POST", sample: JSON.stringify({ oldPassword: "CurrentPassword123", newPassword: "NewSecurePassword456" }, null, 2) },
+  { group: "Customer APIs", label: "Generate Customer OTP", url: "/api/v1/customer/generate-otp", method: "POST", sample: JSON.stringify({ serviceRequestId: "<serviceRequestId>" }, null, 2) },
+  { group: "Customer APIs", label: "Refresh Customer Access Token", url: "/api/v1/customer/refresh-token", method: "POST", sample: JSON.stringify({ refreshToken: "<your_refresh_token_here>" }, null, 2) },
+  { group: "Customer APIs", label: "Customer Logout", url: "/api/v1/customer/logout", method: "POST", sample: JSON.stringify({}, null, 2) },
 
   // --- WORKER APIs ---
   { group: "Worker APIs", label: "Worker Login", url: "/api/v1/worker/login", method: "POST", sample: JSON.stringify({ email: "worker@example.com", password: "Password123" }, null, 2) },
-  { group: "Worker APIs", label: "Worker Register", url: "/api/v1/worker/register", method: "POST", sample: JSON.stringify({ fullName: "Amit Kumar", email: "amit.worker@example.com", phone: "9822334455", password: "Password123", categories: ["Electrician", "Plumber"], address: "Delhi NCR" }, null, 2) },
+  { group: "Worker APIs", label: "Worker Register", url: "/api/v1/worker/register", method: "POST", sample: JSON.stringify({ fullName: "Amit Kumar", email: "amit.worker@example.com", phone: "9822334455", password: "Password123", categories: ["Electrician", "Plumber"], address: "Sector 18, Noida" }, null, 2) },
+  { group: "Worker APIs", label: "Worker Google Login", url: "/api/v1/worker/google-login", method: "POST", sample: JSON.stringify({ email: "worker@example.com", fullName: "Amit Kumar", googleId: "google_worker_sub_12345" }, null, 2) },
   { group: "Worker APIs", label: "Current Worker Profile", url: "/api/v1/worker/current-user", method: "GET", sample: "" },
   { group: "Worker APIs", label: "Get Worker by ID", url: "/api/v1/worker/worker-info", method: "POST", sample: JSON.stringify({ workerId: "<workerId>" }, null, 2) },
   { group: "Worker APIs", label: "Update Working Categories", url: "/api/v1/worker/update-categories", method: "PATCH", sample: JSON.stringify({ categories: ["Electrician", "Carpenter", "Appliance Repair"] }, null, 2) },
+  { group: "Worker APIs", label: "Update Worker Full Name", url: "/api/v1/worker/update-fullName", method: "PATCH", sample: JSON.stringify({ fullName: "Amit S. Kumar" }, null, 2) },
+  { group: "Worker APIs", label: "Update Worker Phone", url: "/api/v1/worker/update-phone", method: "PATCH", sample: JSON.stringify({ phone: "9877001122" }, null, 2) },
+  { group: "Worker APIs", label: "Update Worker Address", url: "/api/v1/worker/update-address", method: "PATCH", sample: JSON.stringify({ address: "Shop 12, Main Market, Delhi" }, null, 2) },
+  { group: "Worker APIs", label: "Update Worker Email", url: "/api/v1/worker/update-email", method: "PATCH", sample: JSON.stringify({ email: "amit.newemail@example.com" }, null, 2) },
+  { group: "Worker APIs", label: "Change Worker Password", url: "/api/v1/worker/change-password", method: "POST", sample: JSON.stringify({ oldPassword: "CurrentPassword123", newPassword: "NewSecurePassword456" }, null, 2) },
   { group: "Worker APIs", label: "Update Worker Location (GPS)", url: "/api/v1/worker/update-location", method: "POST", sample: JSON.stringify({ latitude: 28.4595, longitude: 77.0266 }, null, 2) },
-  { group: "Worker APIs", label: "Verify Service OTP", url: "/api/v1/worker/verify-otp", method: "POST", sample: JSON.stringify({ serviceRequestId: "<id>", otp: "123456" }, null, 2) },
+  { group: "Worker APIs", label: "Verify Service OTP", url: "/api/v1/worker/verify-otp", method: "POST", sample: JSON.stringify({ serviceRequestId: "<serviceRequestId>", otp: "123456" }, null, 2) },
   { group: "Worker APIs", label: "Rate Worker", url: "/api/v1/worker/rate", method: "POST", sample: JSON.stringify({ workerId: "<workerId>", rating: 5, review: "Prompt and professional work." }, null, 2) },
+  { group: "Worker APIs", label: "Refresh Worker Access Token", url: "/api/v1/worker/refresh-token", method: "POST", sample: JSON.stringify({ refreshToken: "<your_refresh_token_here>" }, null, 2) },
+  { group: "Worker APIs", label: "Worker Logout", url: "/api/v1/worker/logout", method: "POST", sample: JSON.stringify({}, null, 2) },
 
   // --- SERVICE REQUEST APIs ---
   { group: "Service Request APIs", label: "Find Nearby Requests", url: "/api/v1/serviceRequest/find-requests", method: "GET", sample: "" },
-  { group: "Service Request APIs", label: "Create Service Request", url: "/api/v1/serviceRequest/create", method: "POST", sample: JSON.stringify({ category: "Electrician", description: "Ceiling fan installation and wiring fix", address: "Flat 301, Sector 21", visitingCharge: 150 }, null, 2) },
-  { group: "Service Request APIs", label: "Accept Service Request", url: "/api/v1/serviceRequest/accept", method: "POST", sample: JSON.stringify({ serviceRequestId: "<id>" }, null, 2) },
+  { group: "Service Request APIs", label: "Create Service Request", url: "/api/v1/serviceRequest/create", method: "POST", sample: JSON.stringify({ category: "Electrician", description: "Ceiling fan installation and wiring fix", address: "Flat 301, Sector 21, Gurugram", visitingCharge: 150 }, null, 2) },
+  { group: "Service Request APIs", label: "Accept Service Request", url: "/api/v1/serviceRequest/accept", method: "POST", sample: JSON.stringify({ serviceRequestId: "<serviceRequestId>" }, null, 2) },
   { group: "Service Request APIs", label: "Set Quote Amount", url: "/api/v1/serviceRequest/<serviceRequestId>/set-quote-amount", method: "PATCH", sample: JSON.stringify({ quoteAmount: 650 }, null, 2) },
-  { group: "Service Request APIs", label: "Accept Repair Quote", url: "/api/v1/serviceRequest/accept-repair-quote", method: "PATCH", sample: JSON.stringify({ serviceRequestId: "<id>" }, null, 2) },
-  { group: "Service Request APIs", label: "Reject Repair Quote", url: "/api/v1/serviceRequest/<serviceRequestId>/reject-repair-quote", method: "PATCH", sample: "" },
-  { group: "Service Request APIs", label: "Get Service Request Details", url: "/api/v1/serviceRequest/get-service-details", method: "POST", sample: JSON.stringify({ serviceRequestId: "<id>" }, null, 2) },
+  { group: "Service Request APIs", label: "Accept Repair Quote", url: "/api/v1/serviceRequest/accept-repair-quote", method: "PATCH", sample: JSON.stringify({ serviceRequestId: "<serviceRequestId>" }, null, 2) },
+  { group: "Service Request APIs", label: "Reject Repair Quote", url: "/api/v1/serviceRequest/<serviceRequestId>/reject-repair-quote", method: "PATCH", sample: JSON.stringify({ reason: "Repair quote exceeds approved budget" }, null, 2) },
+  { group: "Service Request APIs", label: "Update Worker Location (En-route)", url: "/api/v1/serviceRequest/<serviceRequestId>/update-worker-location", method: "PATCH", sample: JSON.stringify({ coordinates: [77.0266, 28.4595] }, null, 2) },
+  { group: "Service Request APIs", label: "Cancel: Customer Not Responding", url: "/api/v1/serviceRequest/<serviceRequestId>/cancelled-by-worker-as-customer-not-responding", method: "POST", sample: JSON.stringify({ reason: "Customer did not answer calls for 30 minutes" }, null, 2) },
+  { group: "Service Request APIs", label: "Cancel: Worker Unable to Serve", url: "/api/v1/serviceRequest/<serviceRequestId>/cancelled-by-worker-as-not-able-to-serve", method: "POST", sample: JSON.stringify({ reason: "Specialized tools unavailable" }, null, 2) },
+  { group: "Service Request APIs", label: "Cancel: Worker Late / No Show", url: "/api/v1/serviceRequest/<serviceRequestId>/cancelled-by-customer-as-worker-not-responding-or-late", method: "POST", sample: JSON.stringify({ reason: "Worker over 1 hour late without notice" }, null, 2) },
+  { group: "Service Request APIs", label: "Cancel: Booked by Mistake", url: "/api/v1/serviceRequest/<serviceRequestId>/cancelled-by-customer-as-by-mistake", method: "POST", sample: JSON.stringify({ reason: "Selected incorrect service category" }, null, 2) },
+  { group: "Service Request APIs", label: "Rate Worker for Service", url: "/api/v1/serviceRequest/<serviceRequestId>/rate-worker", method: "PATCH", sample: JSON.stringify({ rating: 5, review: "Great on-time repair work" }, null, 2) },
+  { group: "Service Request APIs", label: "Report Worker Complaint", url: "/api/v1/serviceRequest/<serviceRequestId>/report-worker", method: "POST", sample: JSON.stringify({ complaint: "Worker requested cash without receipt" }, null, 2) },
+  { group: "Service Request APIs", label: "Get Service Request Details", url: "/api/v1/serviceRequest/get-service-details", method: "POST", sample: JSON.stringify({ serviceRequestId: "<serviceRequestId>" }, null, 2) },
   { group: "Service Request APIs", label: "Customer Service History", url: "/api/v1/serviceRequest/history", method: "GET", sample: "" },
   { group: "Service Request APIs", label: "Worker Service History", url: "/api/v1/serviceRequest/history_worker", method: "GET", sample: "" },
-  { group: "Service Request APIs", label: "Update Job Status", url: "/api/v1/serviceRequest/update-job-status", method: "POST", sample: JSON.stringify({ serviceRequestId: "<id>", status: "completed" }, null, 2) },
+  { group: "Service Request APIs", label: "Update Job Status", url: "/api/v1/serviceRequest/update-job-status", method: "POST", sample: JSON.stringify({ serviceRequestId: "<serviceRequestId>", status: "completed" }, null, 2) },
+  { group: "Service Request APIs", label: "Mark Payment Done", url: "/api/v1/serviceRequest/mark-payment", method: "PUT", sample: JSON.stringify({ serviceRequestId: "<serviceRequestId>", paymentType: "cash" }, null, 2) },
 
   // --- PAYMENT APIs ---
   { group: "Payment APIs", label: "Create Razorpay Order", url: "/api/v1/payment/<serviceRequestId>/create-order", method: "POST", sample: JSON.stringify({ amount: 650 }, null, 2) },
-  { group: "Payment APIs", label: "Verify Razorpay Payment", url: "/api/v1/payment/<serviceRequestId>/verify-payment", method: "POST", sample: JSON.stringify({ razorpay_order_id: "order_123", razorpay_payment_id: "pay_456", razorpay_signature: "sig_789" }, null, 2) },
-  { group: "Payment APIs", label: "Cash Payment Received", url: "/api/v1/payment/<serviceRequestId>/payment-received-by-cash", method: "POST", sample: "" },
+  { group: "Payment APIs", label: "Verify Razorpay Payment", url: "/api/v1/payment/<serviceRequestId>/verify-payment", method: "POST", sample: JSON.stringify({ razorpay_order_id: "order_EKzX9H5QvYl1Xm", razorpay_payment_id: "pay_EKzXN34M7fB0bA", razorpay_signature: "9b12a83f4b5c6d7e8f0a1b2c3d4e5f6a7b8c9d0e" }, null, 2) },
+  { group: "Payment APIs", label: "Cash Payment Received", url: "/api/v1/payment/<serviceRequestId>/payment-received-by-cash", method: "POST", sample: JSON.stringify({ notes: "Cash collected on premise: INR 650" }, null, 2) },
+  { group: "Payment APIs", label: "Create Worker Platform Order", url: "/api/v1/payment/create-order-for-worker", method: "POST", sample: JSON.stringify({ amount: 250 }, null, 2) },
+  { group: "Payment APIs", label: "Verify Worker Platform Payment", url: "/api/v1/payment/verify-payment-for-worker", method: "POST", sample: JSON.stringify({ razorpayOrderId: "order_WKzX9H5QvYl1Xm", razorpayPaymentId: "pay_WKzXN34M7fB0bA", razorpaySignature: "3f4b5c6d7e8f0a1b2c3d4e5f6a7b8c9d0e9b12a8", amount: 250 }, null, 2) },
 
   // --- SYSTEM DIAGNOSTICS ---
   { group: "Diagnostics", label: "Server Latency Ping", url: "/api/ping", method: "GET", sample: "" },
@@ -127,9 +173,20 @@ const AdminDashboard = () => {
   const [statusFilter, setStatusFilter] = useState("all");
 
   // Forms State
-  const [apiForm, setApiForm] = useState({ url: "", method: "GET", data: "", headers: "", authValue: "" });
+  const [apiForm, setApiForm] = useState({ url: "", method: "GET", data: "" });
   const [apiResponse, setApiResponse] = useState(null);
   const [apiLoading, setApiLoading] = useState(false);
+  const [selectedPresetIndex, setSelectedPresetIndex] = useState("");
+
+  const getJsonValidationStatus = (str) => {
+    if (!str || !str.trim()) return { valid: true, empty: true, message: "Empty body" };
+    try {
+      JSON.parse(str);
+      return { valid: true, empty: false, message: "Valid JSON" };
+    } catch (e) {
+      return { valid: false, empty: false, message: e.message };
+    }
+  };
 
   const [messageForm, setMessageForm] = useState({ toEmail: "", subject: "", body: "" });
   const [messageLoading, setMessageLoading] = useState(false);
@@ -228,23 +285,14 @@ const AdminDashboard = () => {
     const startTime = Date.now();
     try {
       const parsedData = apiForm.data ? JSON.parse(apiForm.data) : undefined;
-      const parsedHeaders = apiForm.headers ? JSON.parse(apiForm.headers) : {};
       const targetUrl = apiForm.url.startsWith("http")
         ? apiForm.url
         : `${apiBaseUrl}${apiForm.url.startsWith("/") ? apiForm.url : `/${apiForm.url}`}`;
 
       const requestHeaders = {
-        ...parsedHeaders,
         "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       };
-
-      if (apiForm.authValue) {
-        requestHeaders.Authorization = apiForm.authValue.startsWith("Bearer ") || apiForm.authValue.startsWith("Basic ")
-          ? apiForm.authValue
-          : `Bearer ${apiForm.authValue}`;
-      } else {
-        requestHeaders.Authorization = `Bearer ${token}`;
-      }
 
       const res = await axios.request({
         method: apiForm.method.toLowerCase(),
@@ -607,19 +655,34 @@ const AdminDashboard = () => {
 
           {/* Admin Profile Box */}
           <div className="p-3 mb-3 rounded-3 bg-secondary bg-opacity-25 border border-secondary border-opacity-50">
-            <div className="d-flex align-items-center gap-2 mb-2">
-              <div
-                className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold"
-                style={{ width: 36, height: 36, fontSize: "14px" }}
-              >
-                {admin?.email ? admin.email.charAt(0).toUpperCase() : "A"}
-              </div>
-              <div className="overflow-hidden">
-                <div className="text-truncate fw-semibold text-white small" title={admin?.email}>
-                  {admin?.email}
+            <div className="d-flex align-items-center justify-content-between mb-2">
+              <div className="d-flex align-items-center gap-2 overflow-hidden">
+                <div
+                  className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold overflow-hidden flex-shrink-0"
+                  style={{ width: 36, height: 36, fontSize: "14px" }}
+                >
+                  {admin?.profilePhoto ? (
+                    <img src={admin.profilePhoto} alt="Admin" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  ) : admin?.email ? (
+                    admin.email.charAt(0).toUpperCase()
+                  ) : (
+                    "A"
+                  )}
                 </div>
-                <div className="mt-1">{getRoleBadge(admin?.role)}</div>
+                <div className="overflow-hidden">
+                  <div className="text-truncate fw-semibold text-white small" title={admin?.fullName || admin?.email}>
+                    {admin?.fullName || admin?.email}
+                  </div>
+                  <div className="mt-1">{getRoleBadge(admin?.role)}</div>
+                </div>
               </div>
+              <MdOutlineEdit
+                size={22}
+                className="text-light text-opacity-75"
+                style={{ cursor: "pointer", transition: "color 0.2s" }}
+                title="Edit Profile"
+                onClick={() => navigate("/edit_admin")}
+              />
             </div>
             <div className="d-flex justify-content-between align-items-center pt-2 border-top border-secondary border-opacity-25 text-secondary" style={{ fontSize: "11px" }}>
               <span>Status: <span className="text-success fw-bold">Online</span></span>
@@ -1306,23 +1369,42 @@ const AdminDashboard = () => {
 
                   <form onSubmit={handleApiSubmit}>
                     <div className="mb-3">
-                      <label className="form-label small fw-semibold text-muted">API Quick Presets (47 Ready Routes)</label>
+                      <div className="d-flex justify-content-between align-items-center mb-1">
+                        <label className="form-label small fw-semibold text-muted mb-0">
+                          API Quick Presets ({apiSuggestions.length} Ready Routes)
+                        </label>
+                        {selectedPresetIndex !== "" && (
+                          <button
+                            type="button"
+                            className="btn btn-link btn-sm p-0 text-decoration-none text-muted"
+                            style={{ fontSize: "0.76rem" }}
+                            onClick={() => {
+                              setSelectedPresetIndex("");
+                              setApiForm({ url: "", method: "GET", data: "" });
+                            }}
+                          >
+                            Reset Form
+                          </button>
+                        )}
+                      </div>
                       <select
                         className="form-select form-select-sm"
+                        value={selectedPresetIndex}
                         onChange={(e) => {
                           const idx = e.target.value;
+                          setSelectedPresetIndex(idx);
                           if (idx === "") return;
                           const sel = apiSuggestions[Number(idx)];
                           setApiForm((prev) => ({
                             ...prev,
                             url: sel.url,
                             method: sel.method,
-                            data: sel.sample,
+                            data: sel.sample || (sel.method !== "GET" ? "{\n  \n}" : ""),
                           }));
                         }}
                       >
                         <option value="">-- Choose an endpoint preset --</option>
-                        {["Admin Management", "Customer APIs", "Worker APIs", "Service Request APIs", "Payment APIs", "Diagnostics"].map((grp) => (
+                        {["Admin Action Dispatcher", "Admin Management", "Customer APIs", "Worker APIs", "Service Request APIs", "Payment APIs", "Diagnostics"].map((grp) => (
                           <optgroup key={grp} label={`--- ${grp} ---`}>
                             {apiSuggestions
                               .map((s, index) => ({ ...s, originalIndex: index }))
@@ -1344,7 +1426,14 @@ const AdminDashboard = () => {
                           className="form-select bg-light fw-bold"
                           style={{ maxWidth: "115px" }}
                           value={apiForm.method}
-                          onChange={(e) => setApiForm((prev) => ({ ...prev, method: e.target.value }))}
+                          onChange={(e) => {
+                            const newMethod = e.target.value;
+                            setApiForm((prev) => ({
+                              ...prev,
+                              method: newMethod,
+                              data: newMethod !== "GET" && !prev.data ? "{\n  \n}" : prev.data,
+                            }));
+                          }}
                         >
                           <option value="GET">GET</option>
                           <option value="POST">POST</option>
@@ -1364,9 +1453,84 @@ const AdminDashboard = () => {
 
                     {apiForm.method !== "GET" && (
                       <div className="mb-3">
-                        <label className="form-label small fw-semibold text-muted">JSON Request Body</label>
+                        <div className="d-flex justify-content-between align-items-center mb-1">
+                          <div className="d-flex align-items-center gap-2">
+                            <label className="form-label small fw-semibold text-muted mb-0">JSON Request Body</label>
+                            {(() => {
+                              const status = getJsonValidationStatus(apiForm.data);
+                              if (status.empty) {
+                                return (
+                                  <span className="badge bg-secondary-subtle text-secondary py-1 px-2 border" style={{ fontSize: "0.72rem" }}>
+                                    Optional / Empty
+                                  </span>
+                                );
+                              }
+                              if (status.valid) {
+                                return (
+                                  <span className="badge bg-success-subtle text-success py-1 px-2 border border-success" style={{ fontSize: "0.72rem" }}>
+                                    <FaCheck className="me-1" /> Valid JSON
+                                  </span>
+                                );
+                              }
+                              return (
+                                <span className="badge bg-danger-subtle text-danger py-1 px-2 border border-danger" style={{ fontSize: "0.72rem" }} title={status.message}>
+                                  <FaExclamationTriangle className="me-1" /> Invalid Syntax
+                                </span>
+                              );
+                            })()}
+                          </div>
+                          <div className="d-flex gap-2">
+                            <button
+                              type="button"
+                              className="btn btn-sm btn-outline-primary py-0 px-2"
+                              style={{ fontSize: "0.78rem" }}
+                              onClick={() => {
+                                try {
+                                  if (!apiForm.data || !apiForm.data.trim()) {
+                                    setApiForm((prev) => ({ ...prev, data: "{\n  \n}" }));
+                                    return;
+                                  }
+                                  const parsed = JSON.parse(apiForm.data);
+                                  setApiForm((prev) => ({ ...prev, data: JSON.stringify(parsed, null, 2) }));
+                                  showToast("JSON formatted cleanly", "info");
+                                } catch (err) {
+                                  showToast("Cannot format: " + err.message, "danger");
+                                }
+                              }}
+                              title="Format and prettify JSON indentation"
+                            >
+                              Format JSON
+                            </button>
+                            {selectedPresetIndex !== "" && apiSuggestions[Number(selectedPresetIndex)]?.sample && (
+                              <button
+                                type="button"
+                                className="btn btn-sm btn-outline-secondary py-0 px-2"
+                                style={{ fontSize: "0.78rem" }}
+                                onClick={() => {
+                                  setApiForm((prev) => ({
+                                    ...prev,
+                                    data: apiSuggestions[Number(selectedPresetIndex)].sample,
+                                  }));
+                                  showToast("Reset to preset sample body", "info");
+                                }}
+                                title="Reset to preset sample payload"
+                              >
+                                Reset Sample
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              className="btn btn-sm btn-outline-secondary py-0 px-2"
+                              style={{ fontSize: "0.78rem" }}
+                              onClick={() => setApiForm((prev) => ({ ...prev, data: "{}" }))}
+                              title="Clear body to empty object"
+                            >
+                              Clear
+                            </button>
+                          </div>
+                        </div>
                         <textarea
-                          rows={6}
+                          rows={8}
                           className="form-control font-monospace small bg-light"
                           placeholder='{\n  "key": "value"\n}'
                           value={apiForm.data}
@@ -1375,16 +1539,6 @@ const AdminDashboard = () => {
                       </div>
                     )}
 
-                    <div className="mb-3">
-                      <label className="form-label small fw-semibold text-muted">Custom Headers (JSON)</label>
-                      <input
-                        type="text"
-                        className="form-control font-monospace small"
-                        placeholder='{"X-Custom-Header": "value"}'
-                        value={apiForm.headers}
-                        onChange={(e) => setApiForm((prev) => ({ ...prev, headers: e.target.value }))}
-                      />
-                    </div>
 
                     <button
                       type="submit"

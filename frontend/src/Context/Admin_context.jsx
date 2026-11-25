@@ -39,7 +39,9 @@ export const AdminProvider = ({ children }) => {
     <AdminContext.Provider
       value={{
         admin,
+        setAdmin,
         token,
+        setToken,
         loginAdmin,
         logoutAdmin,
         isAuthenticated: !!admin,

@@ -6,11 +6,54 @@ import { Worker } from "../models/worker.model.js";
 import { ServiceRequest } from "../models/serviceRequest.model.js";
 import { AdminRequest } from "../models/adminRequest.model.js";
 import { AdminComment } from "../models/adminComment.model.js";
+import { AdminMessage } from "../models/adminMessage.model.js";
+import { Otp } from "../models/otp.model.js";
+import { Transaction } from "../models/transaction.model.js";
+import { Cancellation } from "../models/cancellation.model.js";
+import { Feedback } from "../models/feedback.model.js";
 import { ApiError } from "../utils/ApiError.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
 import crypto from "crypto";
+
+import {
+  generateOtpobj,
+  getCustomerById,
+  updateEmail as updateCustomerEmail,
+  updatePhone as updateCustomerPhone,
+  updateAddress as updateCustomerAddress,
+  updateFullName as updateCustomerFullName,
+} from "./customer.controller.js";
+import {
+  verifyOtpForService,
+  getWorkerById,
+  rateWorker as rateWorkerAction,
+  updateWorkerLocation,
+  updateCategory as updateWorkerCategory,
+} from "./worker.controller.js";
+import {
+  createServiceRequest,
+  acceptRequest,
+  setQuoteAmount,
+  acceptRepairQuote,
+  rejectRepairQuote,
+  getServiceRequestDetails,
+  getCustomerHistory,
+  getWorkerHistory,
+  updateJobStatus,
+  markPaymentDone,
+  cancelledByWorkerAsCustomerNotResponding,
+  cancelledByWorkerAsNotAbleToServe,
+  cancelledByCustomerAsWorkerNotRespondingOrLate,
+  cancelledByCustomerAsByMistake,
+  reportWorker,
+} from "./serviceRequest.controller.js";
+import {
+  paymentReceivedByCash,
+} from "./payment.controller.js";
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -28,6 +71,39 @@ const createAccessAndRefreshTokens = async (admin) => {
   admin.refreshToken = refreshToken;
   await admin.save();
   return { accessToken, refreshToken };
+};
+
+const getAdminEmailTransporter = () => {
+  return nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: process.env.EMAIL,
+      pass: (process.env.EMAIL_PASS || "").replace(/\s+/g, ""),
+    },
+  });
+};
+
+const generateOtpCode = () => Math.floor(100000 + Math.random() * 900000).toString();
+
+const sendSmsIfConfigured = async (toPhone, body) => {
+  if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_PHONE_NUMBER) {
+    try {
+      const twilioModule = await import("twilio");
+      const twilio = twilioModule.default;
+      const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+      const formatted = toPhone.startsWith("+") ? toPhone : "+91" + toPhone;
+      await client.messages.create({
+        body,
+        from: process.env.TWILIO_PHONE_NUMBER,
+        to: formatted,
+      });
+      return true;
+    } catch (e) {
+      console.warn("Twilio SMS dispatch failed:", e.message);
+      return false;
+    }
+  }
+  return false;
 };
 
 const loginAdminWithGoogle = asyncHandler(async (req, res) => {
@@ -266,8 +342,6 @@ const blockUser = asyncHandler(async (req, res) => {
     message: `${entityType} ${actionMsg}`,
   });
 });
-
-import { AdminMessage } from "../models/adminMessage.model.js";
 
 const sendMessage = asyncHandler(async (req, res) => {
   const { toEmail, subject, body } = req.body;
@@ -697,6 +771,400 @@ const updateAdminRole = asyncHandler(async (req, res) => {
   });
 });
 
+const executeAdminAction = asyncHandler(async (req, res, next) => {
+  const { action } = req.body;
+  if (!action) {
+    throw new ApiError(400, "Action identifier is required (e.g. 'generate-otp', 'verify-otp', 'update-job-status')");
+  }
+
+  const payload = req.body.payload || req.body.data || req.body;
+
+  // Normalize req.params and req.body from payload for compatibility with all controllers
+  req.params = { ...req.params, ...payload };
+  req.body = { ...req.body, ...payload };
+
+  switch (action) {
+    // ----------------------------------------------------
+    // 1. GENERATE CUSTOMER OTP (Reuses generateOtpobj from customer.controller.js)
+    // ----------------------------------------------------
+    case "generate-otp":
+    case "generateOtp": {
+      req.body.serviceRequestId = payload.serviceRequestId || req.body.serviceRequestId;
+      return await generateOtpobj(req, res, next);
+    }
+
+    // ----------
+    // ------------------------------------------
+    // 2. VERIFY SERVICE OTP (Reuses verifyOtpForService from worker.controller.js)
+    // ----------------------------------------------------
+    case "verify-otp":
+    case "verifyOtp": {
+      req.body.serviceRequestId = payload.serviceRequestId || req.body.serviceRequestId;
+      req.body.otp = payload.otp || req.body.otp;
+      return await verifyOtpForService(req, res, next);
+    }
+
+    // ----------------------------------------------------
+    // 3. GET CUSTOMER BY ID / EMAIL (Reuses getCustomerById from customer.controller.js)
+    // ----------------------------------------------------
+    case "get-customer":
+    case "getCustomer":
+    case "getCustomerById": {
+      req.body.id = payload.customerId || payload.id || req.body.id;
+      if (!req.body.id && payload.email) {
+        const cust = await Customer.findOne({ email: payload.email.toLowerCase() });
+        if (!cust) throw new ApiError(404, "Customer not found with email: " + payload.email);
+        req.body.id = cust._id;
+      }
+      return await getCustomerById(req, res, next);
+    }
+
+    // ----------------------------------------------------
+    // 4. GET WORKER BY ID / EMAIL (Reuses getWorkerById from worker.controller.js)
+    // ----------------------------------------------------
+    case "get-worker":
+    case "getWorker":
+    case "getWorkerById": {
+      req.body._id = payload.workerId || payload.id || req.body._id;
+      if (!req.body._id && payload.email) {
+        const w = await Worker.findOne({ email: payload.email.toLowerCase() });
+        if (!w) throw new ApiError(404, "Worker not found with email: " + payload.email);
+        req.body._id = w._id;
+      }
+      return await getWorkerById(req, res, next);
+    }
+
+    // ----------------------------------------------------
+    // 5. GET SERVICE REQUEST DETAILS (Reuses getServiceRequestDetails from serviceRequest.controller.js)
+    // ----------------------------------------------------
+    case "get-service-details":
+    case "getServiceRequestDetails": {
+      req.body.serviceRequestId = payload.serviceRequestId || req.body.serviceRequestId || payload.id;
+      return await getServiceRequestDetails(req, res, next);
+    }
+
+    // ----------------------------------------------------
+    // 6. UPDATE JOB STATUS (Reuses updateJobStatus from serviceRequest.controller.js)
+    // ----------------------------------------------------
+    case "update-job-status":
+    case "updateJobStatus": {
+      req.body.serviceRequestId = payload.serviceRequestId || req.body.serviceRequestId;
+      req.body.newStatus = payload.newStatus || payload.status || req.body.newStatus;
+      return await updateJobStatus(req, res, next);
+    }
+
+    // ----------------------------------------------------
+    // 7. SET REPAIR QUOTE AMOUNT (Reuses setQuoteAmount from serviceRequest.controller.js)
+    // ----------------------------------------------------
+    case "set-quote-amount":
+    case "setQuoteAmount": {
+      req.params.serviceRequestId = payload.serviceRequestId || req.params.serviceRequestId || payload.id;
+      req.body.quoteAmount = payload.quoteAmount || req.body.quoteAmount;
+      if (!req.worker?._id) {
+        const sReq = await ServiceRequest.findById(req.params.serviceRequestId);
+        req.worker = { _id: payload.workerId || sReq?.workerId };
+      }
+      return await setQuoteAmount(req, res, next);
+    }
+
+    // ----------------------------------------------------
+    // 8. ACCEPT REPAIR QUOTE (Reuses acceptRepairQuote from serviceRequest.controller.js)
+    // ----------------------------------------------------
+    case "accept-repair-quote":
+    case "acceptRepairQuote": {
+      req.params.serviceRequestId = payload.serviceRequestId || req.params.serviceRequestId || payload.id;
+      return await acceptRepairQuote(req, res, next);
+    }
+
+    // ----------------------------------------------------
+    // 9. REJECT REPAIR QUOTE (Reuses rejectRepairQuote from serviceRequest.controller.js)
+    // ----------------------------------------------------
+    case "reject-repair-quote":
+    case "rejectRepairQuote": {
+      req.params.serviceRequestId = payload.serviceRequestId || req.params.serviceRequestId || payload.id;
+      return await rejectRepairQuote(req, res, next);
+    }
+
+    // ----------------------------------------------------
+    // 10. MARK PAYMENT DONE (Reuses markPaymentDone from serviceRequest.controller.js)
+    // ----------------------------------------------------
+    case "mark-payment":
+    case "markPaymentDone": {
+      req.body.serviceRequestId = payload.serviceRequestId || req.body.serviceRequestId;
+      return await markPaymentDone(req, res, next);
+    }
+
+    // ----------------------------------------------------
+    // 11. CASH PAYMENT RECEIVED (Reuses paymentReceivedByCash from payment.controller.js)
+    // ----------------------------------------------------
+    case "cash-payment":
+    case "paymentReceivedByCash": {
+      req.params.serviceRequestId = payload.serviceRequestId || req.params.serviceRequestId;
+      return await paymentReceivedByCash(req, res, next);
+    }
+
+    // ----------------------------------------------------
+    // 12. RATE WORKER FOR SERVICE (Reuses rateWorker from worker.controller.js)
+    // ----------------------------------------------------
+    case "rate-worker":
+    case "rateWorker": {
+      req.body.serviceRequestId = payload.serviceRequestId || req.body.serviceRequestId;
+      req.body.rating = payload.rating !== undefined ? Number(payload.rating) : req.body.rating;
+      return await rateWorkerAction(req, res, next);
+    }
+
+    // ----------------------------------------------------
+    // 13. REPORT WORKER (Reuses reportWorker from serviceRequest.controller.js)
+    // ----------------------------------------------------
+    case "report-worker":
+    case "reportWorker": {
+      req.params.serviceRequestId = payload.serviceRequestId || req.params.serviceRequestId;
+      return await reportWorker(req, res, next);
+    }
+
+    // ----------------------------------------------------
+    // 14. GET CUSTOMER HISTORY (Reuses getCustomerHistory from serviceRequest.controller.js)
+    // ----------------------------------------------------
+    case "get-customer-history":
+    case "getCustomerHistory": {
+      const custId = payload.customerId || payload.id;
+      req.customer = { _id: custId };
+      return await getCustomerHistory(req, res, next);
+    }
+
+    // ----------------------------------------------------
+    // 15. GET WORKER HISTORY (Reuses getWorkerHistory from serviceRequest.controller.js)
+    // ----------------------------------------------------
+    case "get-worker-history":
+    case "getWorkerHistory": {
+      const wId = payload.workerId || payload.id;
+      req.worker = { _id: wId };
+      return await getWorkerHistory(req, res, next);
+    }
+
+    // ----------------------------------------------------
+    // 16. UPDATE WORKER LOCATION (Reuses updateWorkerLocation from worker.controller.js)
+    // ----------------------------------------------------
+    case "update-worker-location":
+    case "updateWorkerLocation": {
+      const wId = payload.workerId || payload.id;
+      req.user = { _id: wId };
+      req.body.coordinates = payload.coordinates || (payload.longitude !== undefined && payload.latitude !== undefined ? [Number(payload.longitude), Number(payload.latitude)] : req.body.coordinates);
+      return await updateWorkerLocation(req, res, next);
+    }
+
+    // ----------------------------------------------------
+    // 17. CREATE SERVICE REQUEST (Reuses createServiceRequest from serviceRequest.controller.js)
+    // ----------------------------------------------------
+    case "create-service-request":
+    case "createServiceRequest": {
+      const custId = payload.customerId || payload.id;
+      req.customer = { _id: custId };
+      return await createServiceRequest(req, res, next);
+    }
+
+    // ----------------------------------------------------
+    // 18. ACCEPT SERVICE REQUEST (Reuses acceptRequest from serviceRequest.controller.js)
+    // ----------------------------------------------------
+    case "accept-service-request":
+    case "acceptRequest": {
+      req.body.serviceRequestId = payload.serviceRequestId || req.body.serviceRequestId;
+      req.worker = { _id: payload.workerId };
+      return await acceptRequest(req, res, next);
+    }
+
+    // ----------------------------------------------------
+    // 19. CANCELLATION ACTIONS (Reuses cancellation methods from serviceRequest.controller.js)
+    // ----------------------------------------------------
+    case "cancel-by-worker-not-responding": {
+      req.params.serviceRequestId = payload.serviceRequestId || req.params.serviceRequestId;
+      return await cancelledByWorkerAsCustomerNotResponding(req, res, next);
+    }
+
+    case "cancel-by-worker-unable": {
+      req.params.serviceRequestId = payload.serviceRequestId || req.params.serviceRequestId;
+      return await cancelledByWorkerAsNotAbleToServe(req, res, next);
+    }
+
+    case "cancel-by-customer-late": {
+      req.params.serviceRequestId = payload.serviceRequestId || req.params.serviceRequestId;
+      req.customer = { _id: payload.customerId };
+      return await cancelledByCustomerAsWorkerNotRespondingOrLate(req, res, next);
+    }
+
+    case "cancel-by-customer-mistake": {
+      req.params.serviceRequestId = payload.serviceRequestId || req.params.serviceRequestId;
+      req.customer = { _id: payload.customerId };
+      return await cancelledByCustomerAsByMistake(req, res, next);
+    }
+
+    // ----------------------------------------------------
+    // 20. UPDATE CUSTOMER PROFILE FIELD (Reuses updateFullName, updatePhone, updateAddress, updateEmail)
+    // ----------------------------------------------------
+    case "update-customer":
+    case "updateCustomer": {
+      const custId = payload.customerId || payload.id;
+      req.customer = { _id: custId };
+      if (payload.fullName) {
+        req.body.fullName = payload.fullName;
+        return await updateCustomerFullName(req, res, next);
+      }
+      if (payload.phone) {
+        req.body.phone = payload.phone;
+        return await updateCustomerPhone(req, res, next);
+      }
+      if (payload.address) {
+        req.body.address = payload.address;
+        return await updateCustomerAddress(req, res, next);
+      }
+      if (payload.email) {
+        req.body.email = payload.email;
+        return await updateCustomerEmail(req, res, next);
+      }
+      throw new ApiError(400, "Provide fullName, phone, address, or email to update customer");
+    }
+
+    // ----------------------------------------------------
+    // 21. UPDATE WORKER CATEGORY (Reuses updateCategory from worker.controller.js)
+    // ----------------------------------------------------
+    case "update-worker-category":
+    case "updateWorkerCategory": {
+      const wId = payload.workerId || payload.id;
+      req.worker = { _id: wId };
+      req.body.newCategory = payload.newCategory || payload.category;
+      return await updateWorkerCategory(req, res, next);
+    }
+
+    // ----------------------------------------------------
+    // 22. RESET PASSWORD (Direct database update)
+    // ----------------------------------------------------
+    case "reset-password":
+    case "resetPassword": {
+      const { userType, id, email, newPassword } = payload;
+      if (!userType || (!id && !email) || !newPassword) {
+        throw new ApiError(400, "userType ('customer'|'worker'), id or email, and newPassword are required");
+      }
+      if (userType === "customer") {
+        const customer = id ? await Customer.findById(id) : await Customer.findOne({ email: email.toLowerCase() });
+        if (!customer) throw new ApiError(404, "Customer not found");
+        customer.password = newPassword;
+        await customer.save({ validateBeforeSave: false });
+        return res.status(200).json({ success: true, message: `Customer (${customer.email}) password reset successfully` });
+      }
+      if (userType === "worker") {
+        const worker = id ? await Worker.findById(id) : await Worker.findOne({ email: email.toLowerCase() });
+        if (!worker) throw new ApiError(404, "Worker not found");
+        worker.password = newPassword;
+        await worker.save({ validateBeforeSave: false });
+        return res.status(200).json({ success: true, message: `Worker (${worker.email}) password reset successfully` });
+      }
+      throw new ApiError(400, "Invalid userType. Must be 'customer' or 'worker'");
+    }
+
+    default:
+      throw new ApiError(
+        400,
+        `Unknown admin action '${action}'. Available actions: generate-otp, verify-otp, get-customer, get-worker, get-service-details, update-job-status, set-quote-amount, accept-repair-quote, reject-repair-quote, mark-payment, cash-payment, rate-worker, report-worker, get-customer-history, get-worker-history, update-worker-location, create-service-request, accept-service-request, cancel-by-worker-not-responding, cancel-by-worker-unable, cancel-by-customer-late, cancel-by-customer-mistake, update-customer, update-worker-category, reset-password`
+      );
+  }
+});
+
+const getCurrentAdmin = asyncHandler(async (req, res) => {
+  const admin = await Admin.findById(req.admin._id).select("-password -refreshToken");
+  if (!admin) {
+    throw new ApiError(404, "Admin account not found");
+  }
+  return res.status(200).json(new ApiResponse(200, admin, "Admin profile fetched successfully"));
+});
+
+const updateAdminFullName = asyncHandler(async (req, res) => {
+  const { fullName } = req.body;
+  if (!fullName || !fullName.trim()) {
+    throw new ApiError(400, "Full name cannot be empty");
+  }
+
+  const admin = await Admin.findByIdAndUpdate(
+    req.admin._id,
+    { $set: { fullName: fullName.trim() } },
+    { new: true }
+  ).select("-password -refreshToken");
+
+  return res.status(200).json(new ApiResponse(200, admin, "Full name updated successfully"));
+});
+
+const updateAdminEmail = asyncHandler(async (req, res) => {
+  throw new ApiError(403, "Administrator email address is permanent and cannot be modified");
+});
+
+const updateAdminProfilePhoto = asyncHandler(async (req, res) => {
+  let photoUrl = req.body?.profilePhoto;
+
+  if (req.file?.path) {
+    const uploadResult = await uploadOnCloudinary(req.file.path);
+    if (uploadResult?.url) {
+      photoUrl = uploadResult.url;
+    }
+  }
+
+  if (!photoUrl) {
+    throw new ApiError(400, "Profile photo file or URL is required");
+  }
+
+  const admin = await Admin.findByIdAndUpdate(
+    req.admin._id,
+    { $set: { profilePhoto: photoUrl } },
+    { new: true }
+  ).select("-password -refreshToken");
+
+  return res.status(200).json(new ApiResponse(200, admin, "Profile photo updated successfully"));
+});
+
+const changeAdminPassword = asyncHandler(async (req, res) => {
+  const { oldPassword, newPassword } = req.body;
+  if (!oldPassword || !newPassword) {
+    throw new ApiError(400, "Both old password and new password are required");
+  }
+
+  if (newPassword.length < 8) {
+    throw new ApiError(400, "New password must be at least 8 characters long");
+  }
+
+  const admin = await Admin.findById(req.admin._id);
+  if (!admin) {
+    throw new ApiError(404, "Admin account not found");
+  }
+
+  const isMatch = await admin.isPasswordCorrect(oldPassword);
+  if (!isMatch) {
+    throw new ApiError(400, "Current password is incorrect");
+  }
+
+  admin.password = newPassword;
+  await admin.save({ validateBeforeSave: false });
+
+  return res.status(200).json(new ApiResponse(200, {}, "Password changed successfully"));
+});
+
+const updateAdminProfile = asyncHandler(async (req, res) => {
+  const { fullName, profilePhoto } = req.body;
+  const updateData = {};
+
+  if (fullName !== undefined && fullName.trim() !== "") {
+    updateData.fullName = fullName.trim();
+  }
+  if (profilePhoto !== undefined && profilePhoto.trim() !== "") {
+    updateData.profilePhoto = profilePhoto.trim();
+  }
+
+  const admin = await Admin.findByIdAndUpdate(
+    req.admin._id,
+    { $set: updateData },
+    { new: true }
+  ).select("-password -refreshToken");
+
+  return res.status(200).json(new ApiResponse(200, admin, "Profile updated successfully"));
+});
+
 export {
   loginAdminWithGoogle,
   loginAdminWithEmail,
@@ -715,4 +1183,11 @@ export {
   runAdminApiCall,
   commentOnEntity,
   editEntity,
+  executeAdminAction,
+  getCurrentAdmin,
+  updateAdminFullName,
+  updateAdminEmail,
+  updateAdminProfilePhoto,
+  changeAdminPassword,
+  updateAdminProfile,
 };
