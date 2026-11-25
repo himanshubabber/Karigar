@@ -48,7 +48,6 @@ await connectDB();
 // }));
 
 // Everything else (cors, routes, etc) goes AFTER this
-app.use(cors());
 
 /*
 const corsOptions = {
