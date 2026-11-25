@@ -88,7 +88,7 @@ const findRequests = asyncHandler(async (req, res) => {
     orderStatus: "searching",
     workerId: null
   })
-  .populate("customerId", "fullName email phone address")
+  .populate("customerId", "fullName email phone address profilePhoto")
   .select(
     "_id customerId workerId category description audioNoteUrl orderStatus jobStatus customerLocation visitingCharge quoteAmount cancelledBy cancellationReason paymentStatus paymentType workerRated ratedWith workerReported searchExpiresAt createdAt"
   );

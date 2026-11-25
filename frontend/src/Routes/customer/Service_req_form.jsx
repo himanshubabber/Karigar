@@ -192,7 +192,7 @@ const Service_req_form = () => {
 
   return (
     <div
-      className="d-flex justify-content-center align-items-center vh-100"
+      className="d-flex justify-content-center align-items-start align-items-sm-center min-vh-100 py-4"
       style={{
         backgroundImage: `url('/landing_page.png')`,
         backgroundSize: "cover",
@@ -200,7 +200,7 @@ const Service_req_form = () => {
         backgroundRepeat: "no-repeat"
       }}
     >
-      <div className="card shadow-lg p-4" style={{ width: "36rem", borderRadius: "15px", backgroundColor: "rgba(255, 255, 255, 0.95)" }}>
+      <div className="card shadow-lg p-3 p-sm-4" style={{ width: "36rem", maxWidth: "94vw", borderRadius: "15px", backgroundColor: "rgba(255, 255, 255, 0.95)" }}>
         <h3 className="text-center fw-bold mb-3 text-primary">Request a Service</h3>
         <form onSubmit={handleSubmit}>
           {/* Category */}
@@ -231,7 +231,7 @@ const Service_req_form = () => {
             <label className="form-label fw-semibold">Audio Note (optional)</label>
 
             {!isRecording && !audioBlob && (
-              <button type="button" className="btn text-white" style={{ backgroundColor: "orange" }}
+              <button type="button" className="btn text-white d-block" style={{ backgroundColor: "orange" }}
               onClick={handleStartRecording}>
                 🎙️ Start Recording
               </button>
@@ -269,7 +269,7 @@ const Service_req_form = () => {
           <div className="mb-3">
             <label className="form-label fw-semibold">Location *</label>
             <button type="button" className=
-            "btn btn-success text-white mb-2" onClick={handleUseLocation}>
+            "btn btn-success text-white mb-2 w-100 w-sm-auto" onClick={handleUseLocation}>
               Use Current Location
             </button>
             {locationText && <div className="text-muted small">{locationText}</div>}
@@ -278,10 +278,10 @@ const Service_req_form = () => {
           {/* Submit */}
           <button
             type="submit"
-           className="btn btn-primary w-50 mx-auto d-block fw-bold py-3"
-           style={{ fontWeight: "700" }} 
+            className="btn btn-primary w-100 w-sm-50 mx-auto d-block fw-bold py-2 py-sm-3"
+            style={{ fontWeight: "700" }}
           >
-         Submit Request
+            Submit Request
           </button>
         </form>
       </div>

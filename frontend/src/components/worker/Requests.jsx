@@ -28,16 +28,35 @@ const Requests = () => {
   }, [updateAllRequests]);
 
   return (
-    <div className="container mt-4 d-flex flex-column align-items-center">
-      <h3 className="mb-4 text-center">Service Requests</h3>
-      {serviceReqs.length === 0 ? (
-        <p>No requests available</p>
-      ) : (
-        <div className="w-100" style={{ maxWidth: "900px", margin: "0 auto" , marginLeft: "350px"}}>
-        {serviceReqs.map((req) => (
-          <Request key={req._id} request={req} />
-        ))}
+    <div className={`container py-4 flex-grow-1 d-flex flex-column align-items-center ${serviceReqs.length === 0 ? "justify-content-center" : ""}`}>
+      {/* Page Header */}
+      <div className="text-center mb-4">
+        <h3 className="fw-bold text-dark mb-1">Available Service Requests</h3>
+        <p className="text-muted small mb-0">Browse and accept customer requests in your service area</p>
       </div>
+
+      {serviceReqs.length === 0 ? (
+        <div
+          className="card text-center p-4 p-sm-5 shadow-sm border-0 my-auto"
+          style={{ maxWidth: "480px", width: "100%", borderRadius: "16px", backgroundColor: "#fff" }}
+        >
+          <div
+            className="d-flex align-items-center justify-content-center mx-auto mb-3"
+            style={{ width: "64px", height: "64px", borderRadius: "16px", backgroundColor: "#e7f1ff" }}
+          >
+            <i className="bi bi-inbox fs-1 text-primary"></i>
+          </div>
+          <h5 className="fw-bold text-dark mb-2">No Requests Available</h5>
+          <p className="text-muted small mb-0">New customer requests will show up here as soon as they are submitted.</p>
+        </div>
+      ) : (
+        <div className="row g-4 justify-content-center w-100" style={{ maxWidth: "1050px" }}>
+          {serviceReqs.map((req) => (
+            <div className="col-12 col-md-6 d-flex align-items-stretch" key={req._id}>
+              <Request request={req} />
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );

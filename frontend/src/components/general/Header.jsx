@@ -117,8 +117,8 @@ const Header = () => {
             {/* Stack on mobile (flex-column), row on large screens (flex-lg-row) */}
             <div className="d-flex flex-column flex-lg-row align-items-stretch align-items-lg-center gap-3 justify-content-end">
 
-              {/* Location Input - Full width on mobile */}
-              <div className="input-group input-group-stylish rounded-pill w-100 w-lg-auto" style={{ maxWidth: '100%', minWidth: '250px', lgMaxWidth: '320px' }}>
+              {/* Location Input - Responsive width */}
+              <div className="input-group input-group-stylish rounded-pill w-100" style={{ maxWidth: '340px' }}>
                 <span className="input-group-text ps-3">
                   <i className="bi bi-geo-alt-fill"></i>
                 </span>

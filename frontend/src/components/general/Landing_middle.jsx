@@ -234,10 +234,10 @@ const Landing_middle = () => {
         .hero-section::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-image: radial-gradient(${colors.primaryBrand} 0.5px, transparent 0.5px); background-size: 20px 20px; opacity: 0.05; z-index: 1; }
 
         /* Default styles for larger screens */
-        .hero-headline { fontSize: 3.5rem; }
-        .hero-subtitle { maxWidth: 650px; }
-        .mobile-card-title { fontSize: 1.1rem; }
-        .mobile-card-text { fontSize: 0.85rem; }
+        .hero-headline { font-size: 3.5rem; }
+        .hero-subtitle { max-width: 650px; }
+        .mobile-card-title { font-size: 1.1rem; }
+        .mobile-card-text { font-size: 0.85rem; }
         .image-wrapper { height: 160px; position: relative; overflow: hidden; background: linear-gradient(to bottom, #f8f9fa, #e9ecef); }
 
         .professional-btn { border-radius: 12px; border: none; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); box-shadow: 0 4px 6px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.1); color: #ffffff; }
@@ -257,16 +257,17 @@ const Landing_middle = () => {
         /* --- MOBILE RESPONSIVE STYLES (under 576px) --- */
         @media (max-width: 576px) {
             /* 1. Smaller Headline */
-            .hero-headline { fontSize: 2rem !important; }
+            .hero-headline { font-size: 1.85rem !important; }
+            .typing-text { font-size: clamp(1.3rem, 6vw, 2rem); }
             /* 2. Full width subtitle */
-            .hero-subtitle { maxWidth: 100% !important; padding: 0 15px; font-size: 1rem !important; }
+            .hero-subtitle { max-width: 100% !important; padding: 0 15px; font-size: 1rem !important; }
             /* 3. Smaller section title */
-            .mobile-section-title { font-size: 1.75rem; }
+            .mobile-section-title { font-size: 1.5rem; }
             /* 4. Shorter image height for small cards */
-            .image-wrapper { height: 130px; }
+            .image-wrapper { height: 120px; }
             /* 5. Smaller card text */
-            .mobile-card-title { fontSize: 0.95rem !important; }
-            .mobile-card-text { fontSize: 0.75rem !important; }
+            .mobile-card-title { font-size: 0.95rem !important; }
+            .mobile-card-text { font-size: 0.75rem !important; }
             /* 6. Adjust button padding and icon size */
             .btn-lg { padding: 0.75rem 1rem; }
             .btn-lg svg { width: 20px; height: 20px; margin-right: 0.5rem !important; }

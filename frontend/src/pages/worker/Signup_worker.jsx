@@ -129,8 +129,8 @@ const Signup_worker = () => {
   };
 
   return (
-    <div className="d-flex justify-content-center align-items-center vh-100 bg-light">
-      <div className="card shadow p-4" style={{ width: "32rem" }}>
+    <div className="d-flex justify-content-center align-items-center min-vh-100 bg-light py-4 py-md-0">
+      <div className="card shadow p-4" style={{ width: "32rem", maxWidth: "94vw" }}>
         <h4 className="text-center mb-4">Worker Signup</h4>
         <form onSubmit={handleSignup} encType="multipart/form-data">
           {["fullName", "email", "password", "phone", "address"].map((field) => (

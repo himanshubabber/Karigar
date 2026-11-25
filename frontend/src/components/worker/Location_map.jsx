@@ -340,9 +340,10 @@ const Location_map = () => {
 
 
   return (
-    <div style={{ display: "flex", padding: "20px", gap: "20px", flexWrap: "nowrap", fontFamily: "Segoe UI, sans-serif" }}>
-      {/* Left Panel */}
-      <div style={{ minWidth: "320px", maxWidth: "420px" }}>
+    <div className="container-fluid py-3 px-2 px-md-3" style={{ fontFamily: "Segoe UI, sans-serif" }}>
+      <div className="d-flex flex-column flex-lg-row gap-3 align-items-start">
+        {/* Left Panel */}
+        <div className="w-100 flex-lg-shrink-0" style={{ maxWidth: "380px", margin: "0 auto" }}>
         {!isLocated && 
         <button
           onClick={startTracking}
@@ -484,7 +485,7 @@ const Location_map = () => {
       </div>
 
       {/* Map */}
-      <div style={{ flexGrow: 1, height: "520px", minWidth: "550px", borderRadius: "12px", boxShadow: "0 3px 10px rgba(0,0,0,0.1)", overflow: "hidden" }}>
+      <div className="flex-grow-1 w-100" style={{ minHeight: "360px", height: "520px", borderRadius: "12px", boxShadow: "0 3px 10px rgba(0,0,0,0.1)", overflow: "hidden" }}>
         <MapContainer center={mapCenter} zoom={13} style={{ height: "100%", width: "100%" }}>
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
           {userPosition && destination && (
@@ -502,7 +503,7 @@ const Location_map = () => {
       </div>
       {console.log("order is:",order)}
       {/* Right Info Card */}
-      <div className="card" style={{ minWidth: "320px", maxWidth: "350px", padding: "20px", borderRadius: "12px", background: "#fefefe", boxShadow: "0 4px 10px rgba(0,0,0,0.1)", height: "fit-content" }}>
+      <div className="card w-100 flex-lg-shrink-0" style={{ maxWidth: "350px", margin: "0 auto", padding: "20px", borderRadius: "12px", background: "#fefefe", boxShadow: "0 4px 10px rgba(0,0,0,0.1)", height: "fit-content" }}>
         <h5 className="fw-bold mb-3" style={{ fontSize: "1.2rem", color: "#343a40", borderBottom: "1px solid #ccc", paddingBottom: "10px", marginBottom: "20px" }}>
           <IoIosInformationCircle size={26} className="me-2 text-black" />
           Customer Request Info
@@ -531,6 +532,7 @@ const Location_map = () => {
           <audio controls src={order.audioNoteUrl} style={{ width: "100%", marginTop: "6px" }} />
         </div>
       </div>
+    </div>
     </div>
   );
 };

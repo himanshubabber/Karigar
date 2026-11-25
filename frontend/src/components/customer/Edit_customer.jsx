@@ -97,9 +97,9 @@ const Edit_customer = () => {
   };
 
   return (
-    <div className="container mt-5">
+    <div className="container my-3 my-sm-5 px-3">
       <div
-        className="card shadow p-4 rounded-xl p-4 bg-white shadow-lg"
+        className="card shadow p-3 p-sm-4 bg-white shadow-lg"
         style={{ maxWidth: "600px", margin: "0 auto", borderRadius: "16px" }}
       >
         <h3 className="text-center mb-4">Edit Customer Profile</h3>
@@ -166,7 +166,7 @@ const Edit_customer = () => {
           <div className="text-end mt-4">
             <button
               type="button"
-              className="btn btn-primary"
+              className="btn btn-primary w-100 w-sm-auto"
               onClick={() => navigate("/customer")}
             >
               Go to Profile

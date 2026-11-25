@@ -8,13 +8,15 @@ import Occupations from "../../components/customer/Occupations.jsx";
 
  const App=()=>{
    return (
-    <>
-    <div className="border-1 border-black">
-    <Header/>
+    <div className="d-flex flex-column min-vh-100">
+      <div className="border-1 border-black">
+        <Header/>
+      </div>
+      <main className="flex-grow-1">
+        <Occupations/>
+      </main>
+      <Footer compact />
     </div>
-    <Occupations/>
-    <Footer/>
-    </>
    );
  }
 

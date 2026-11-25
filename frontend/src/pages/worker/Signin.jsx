@@ -94,14 +94,11 @@ const Signin_worker = () => {
     }
   };
   
-  return ( 
-    <div className="d-flex justify-content-center align-items-center vh-100 bg-light">
-     
-      <div className="card shadow" style={{ width: "28rem" }}>
-        <div className="card-body">
-          <h3 className="text-center mb-4"
-          >Worker Login</h3>
-
+  return (
+    <div className="d-flex justify-content-center align-items-center min-vh-100 bg-light py-4 py-md-0">
+      <div className="card shadow" style={{ width: "28rem", maxWidth: "94vw" }}>
+        <div className="card-body p-4">
+          <h3 className="text-center mb-4">Worker Login</h3>
 
           <form onSubmit={handleSubmit}>
             <div className="mb-3">
@@ -137,30 +134,26 @@ const Signin_worker = () => {
               Sign In
             </button>
 
-            <p></p>
-            <p style={{textAlign:"center"}}>Or</p>
+            <p className="text-center mt-3 mb-2">Or</p>
 
             <div
-  style={{
-    display: "flex",           // enable flex
-    justifyContent: "center",  // center horizontally
-    width: "28rem",            // match your card width
-    maxWidth: "100%",          // responsive on smaller screens
-    margin: "1rem auto",       // center container in page
-  }}
->
-    <GoogleLogin
-      onSuccess={handleGoogleLogin}
-      onError={() => console.log("Google login failed")}
-      theme="filled_blue"
-      size="large"
-      width={448} // max width allowed
-    ></GoogleLogin>
-    </div>
-  
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                width: "100%",
+                maxWidth: "100%",
+                margin: "1rem auto",
+              }}
+            >
+              <GoogleLogin
+                onSuccess={handleGoogleLogin}
+                onError={() => console.log("Google login failed")}
+                theme="filled_blue"
+                size="large"
+                width={380}
+              />
+            </div>
           </form>
-
-  
         </div>
       </div>
       {loading && (

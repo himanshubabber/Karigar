@@ -450,8 +450,8 @@ useEffect(() => {
 
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "20px" }}>
-      <div style={{ width: "80%", maxWidth: "1200px" }}>
+    <div className="container-fluid py-3 px-2 px-md-4 d-flex flex-column align-items-center">
+      <div className="w-100" style={{ maxWidth: "1200px" }}>
         <div style={{ width: "100%", marginBottom: "20px" }}>
           {destination && ser.orderStatus!=="completed"
           &&
@@ -461,6 +461,7 @@ ser.orderStatus !== ''
               center={userPosition}
               zoom={13}
               style={{
+                minHeight: "350px",
                 height: "500px",
                 width: "100%",
                 borderRadius: "12px",

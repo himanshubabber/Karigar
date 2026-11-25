@@ -95,9 +95,9 @@ const History_customer = () => {
   }, []);
 
   return (
-    <div className="container py-5">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2 className="fw-bold text-primary">🕓 Service History</h2>
+    <div className="container py-3 py-sm-5">
+      <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <h2 className="fw-bold text-primary mb-0 fs-3 fs-sm-2">🕓 Service History</h2>
         <button className="btn btn-outline-primary" onClick={() => navigate("/customer")}>
           ⬅ Back to Profile
         </button>
