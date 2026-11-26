@@ -100,7 +100,6 @@ const Location_map_user = () => {
   const { otpData: otp } = useOtp();
   const { selectedReq: ser, updateSelectedReq } = useServiceReq();
 
-  const [otpShow, setOtpShow] = useState(false);
   const [userPosition, setUserPosition] = useState(null);
   const [showCancelOptions, setShowCancelOptions] = useState(false);
   const [track, setTrack] = useState(false);
@@ -193,7 +192,6 @@ const Location_map_user = () => {
   
       );
 
-      setOtpShow(true)
       const options = {
         key: "rzp_test_4RSGtzPekc2oSp", // <- ✅ Use VITE_ prefixed env var
         order_id: data.data.id,
@@ -314,7 +312,6 @@ const Location_map_user = () => {
         }
       );
       console.log("✅ Payment status updated:", response.data);
-      setOtpShow(true)
       // Optionally show success message or update UI
     } catch (error) {
       console.error("❌ Failed to update payment status:", error?.response?.data?.message || error.message);
@@ -661,7 +658,6 @@ useEffect(() => {
                   <button className="btn btn-primary fw-bold w-100 py-2 rounded-pill shadow-sm" onClick={handlePayment}>
                     Pay to Start Work
                   </button>
-                  {otpShow && <div className="text-success small fw-semibold mt-2">✓ OTP Sent to Registered Mobile No.</div>}
                 </div>
               )}
             </div>

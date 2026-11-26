@@ -194,6 +194,7 @@ const Location_map = () => {
 
   const handleSubmitOtp = async () => {
     if (!otp) return alert("Please enter OTP");
+    if (otp.trim().length !== 6) return alert("Please enter a valid 6-digit OTP");
   
     try {
       const res = await api.post(
@@ -458,7 +459,7 @@ const Location_map = () => {
                       type="text"
                       value={otp}
                       onChange={(e) => setOtp(e.target.value)}
-                      placeholder="Enter 4-digit OTP"
+                      placeholder="Enter 6-digit OTP"
                       className="form-control"
                       maxLength={6}
                     />

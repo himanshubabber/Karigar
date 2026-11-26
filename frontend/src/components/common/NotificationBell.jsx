@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import {
   FaBell,
   FaCheckDouble,
@@ -20,6 +21,7 @@ const NotificationBell = ({
   onNavigate,
   isDark = false,
 }) => {
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [filter, setFilter] = useState("all"); // 'all' | 'unread'
   const [dbNotifications, setDbNotifications] = useState([]);
@@ -117,10 +119,31 @@ const NotificationBell = ({
       console.error("Mark read error:", e);
     }
 
-    if (notif.link && onNavigate) {
-      onNavigate(notif.link);
-      setIsOpen(false);
+    // Extract full 24-char serviceRequestId from link or message if present
+    const idFromLink = (notif.link || "").match(/serviceRequestId=([0-9a-fA-F]{24})/);
+    const idFromMsg = (notif.message || "").match(/[#\s]([0-9a-fA-F]{24})/);
+    const extractedServiceId = idFromLink ? idFromLink[1] : idFromMsg ? idFromMsg[1] : null;
+
+    if (extractedServiceId) {
+      try {
+        localStorage.setItem("serviceRequestId", extractedServiceId);
+      } catch (err) {
+        console.error("Failed to set serviceRequestId in localStorage:", err);
+      }
     }
+
+    if (onNavigate) {
+      onNavigate(notif.link);
+    } else if (notif.link && notif.link.startsWith("/")) {
+      navigate(notif.link);
+    } else if (extractedServiceId) {
+      if (role === "customer") {
+        navigate(`/location_user?serviceRequestId=${extractedServiceId}`);
+      } else if (role === "worker") {
+        navigate(`/location_worker?serviceRequestId=${extractedServiceId}`);
+      }
+    }
+    setIsOpen(false);
   };
 
   const handleMarkAllAsRead = async () => {
