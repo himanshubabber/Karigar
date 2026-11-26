@@ -80,26 +80,27 @@ const Occupations = () => {
   return (
     <div className="container my-5">
       {/* Customer Info Card */}
-      <div className="card mb-4 shadow p-4 position-relative" style={{ borderRadius: "14px" }}>
+      <div className="card mb-4 border-0 shadow-sm p-4 p-md-4 position-relative" style={{ borderRadius: "16px", backgroundColor: "#fff" }}>
         {/* Edit Icon */}
-        <MdOutlineEdit
-          size={26}
-          className="position-absolute top-0 end-0 m-3 text-dark"
-          style={{ cursor: "pointer" }}
+        <button
+          className="btn btn-outline-secondary btn-sm rounded-circle position-absolute top-0 end-0 m-3 d-flex align-items-center justify-content-center"
+          style={{ width: "36px", height: "36px" }}
           title="Edit Profile"
           onClick={() => navigate("/edit_customer", { state: customer })}
-        />
+        >
+          <MdOutlineEdit size={20} />
+        </button>
 
         {/* Profile Info */}
-        <div className="d-flex align-items-center mb-3">
+        <div className="d-flex flex-column flex-sm-row align-items-center text-center text-sm-start mb-3 gap-3">
           <div
+            className="flex-shrink-0 shadow-sm"
             style={{
               width: "110px",
               height: "110px",
               borderRadius: "50%",
               overflow: "hidden",
-              marginRight: "20px",
-              border: "2px solid #ccc",
+              border: "3px solid #f1f3f5",
             }}
           >
             <img
@@ -112,24 +113,29 @@ const Occupations = () => {
               style={{ width: "100%", height: "100%", objectFit: "cover" }}
             />
           </div>
-          <div>
-            <h4 className="fw-bold mb-1">{customer?.fullName || "Customer"}</h4>
-            <p className="mb-1 text-muted">{customer?.email || "Email not available"}</p>
-            <p className="mb-1 text-muted">{customer?.phone || "Phone not available"}</p>
-            <p className="mb-0 text-muted">{customer?.address || "Address not available"}</p>
+          <div className="flex-grow-1">
+            <h4 className="fw-bold mb-2 text-dark">{customer?.fullName || "Customer"}</h4>
+            <p className="mb-1 text-muted small text-break">
+              <i className="bi bi-envelope me-2 text-primary"></i>{customer?.email || "Email not available"}
+            </p>
+            <p className="mb-1 text-muted small">
+              <i className="bi bi-telephone me-2 text-primary"></i>{customer?.phone || "Phone not available"}
+            </p>
+            <p className="mb-0 text-muted small">
+              <i className="bi bi-geo-alt me-2 text-primary"></i>{customer?.address || "Address not available"}
+            </p>
           </div>
+        </div>
 
+        {/* Action Buttons */}
+        <div className="d-flex justify-content-between align-items-center mt-2 pt-3 border-top flex-wrap gap-2">
           <button
-            className="btn btn-outline-primary fw-bold position-absolute bottom-0 end-0 m-3"
+            className="btn btn-outline-primary fw-bold"
             onClick={() => navigate("/history_customer")}
             title="History"
           >
             History
           </button>
-        </div>
-
-        {/* Logout Button */}
-        <div className="text-end">
           <button
             className="btn btn-outline-danger d-flex align-items-center gap-2 fw-bold"
             onClick={handleLogout}
@@ -186,10 +192,10 @@ const Occupations = () => {
         .hero-section::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-image: radial-gradient(${colors.primaryBrand} 0.5px, transparent 0.5px); background-size: 20px 20px; opacity: 0.05; z-index: 1; }
 
         /* Default styles for larger screens */
-        .hero-headline { fontSize: 3.5rem; }
-        .hero-subtitle { maxWidth: 650px; }
-        .mobile-card-title { fontSize: 1.1rem; }
-        .mobile-card-text { fontSize: 0.85rem; }
+        .hero-headline { font-size: 3.5rem; }
+        .hero-subtitle { max-width: 650px; }
+        .mobile-card-title { font-size: 1.1rem; }
+        .mobile-card-text { font-size: 0.85rem; }
         .image-wrapper { height: 160px; position: relative; overflow: hidden; background: linear-gradient(to bottom, #f8f9fa, #e9ecef); }
 
         .professional-btn { border-radius: 12px; border: none; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); box-shadow: 0 4px 6px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.1); color: #ffffff; }
@@ -208,16 +214,16 @@ const Occupations = () => {
         /* --- MOBILE RESPONSIVE STYLES (under 576px) --- */
         @media (max-width: 576px) {
             /* 1. Smaller Headline */
-            .hero-headline { fontSize: 2rem !important; }
+            .hero-headline { font-size: 1.85rem !important; }
             /* 2. Full width subtitle */
-            .hero-subtitle { maxWidth: 100% !important; padding: 0 15px; font-size: 1rem !important; }
+            .hero-subtitle { max-width: 100% !important; padding: 0 15px; font-size: 1rem !important; }
             /* 3. Smaller section title */
-            .mobile-section-title { font-size: 1.75rem; }
+            .mobile-section-title { font-size: 1.5rem; }
             /* 4. Shorter image height for small cards */
-            .image-wrapper { height: 130px; }
+            .image-wrapper { height: 120px; }
             /* 5. Smaller card text */
-            .mobile-card-title { fontSize: 0.95rem !important; }
-            .mobile-card-text { fontSize: 0.75rem !important; }
+            .mobile-card-title { font-size: 0.95rem !important; }
+            .mobile-card-text { font-size: 0.75rem !important; }
             /* 6. Adjust button padding and icon size */
             .btn-lg { padding: 0.75rem 1rem; }
             .btn-lg svg { width: 20px; height: 20px; margin-right: 0.5rem !important; }

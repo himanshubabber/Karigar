@@ -73,9 +73,9 @@ const Signup_customer = () => {
   };
 
   return (
-    <div className="d-flex justify-content-center align-items-center vh-100 bg-light">
-      <div className="card shadow" style={{ width: "28rem" }}>
-        <div className="card-body">
+    <div className="d-flex justify-content-center align-items-center min-vh-100 bg-light py-4 py-md-0">
+      <div className="card shadow" style={{ width: "28rem", maxWidth: "94vw" }}>
+        <div className="card-body p-4">
           <h4 className="text-center mb-4">Customer Signup</h4>
           <form onSubmit={handleSignup} encType="multipart/form-data">
             {["fullName", "email", "phone", "address", "password"].map((field) => (

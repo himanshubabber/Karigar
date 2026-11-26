@@ -18,6 +18,7 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
 import crypto from "crypto";
+import { sendNotification } from "./notification.controller.js";
 
 import {
   generateOtpobj,
@@ -524,6 +525,16 @@ Karigar Management Team`,
     console.error("Failed to log approval message:", logErr.message);
   }
 
+  // Notify Master Admins and the updated admin
+  await sendNotification({
+    recipientRole: "admin",
+    recipientId: admin._id,
+    title: "Elevation Request Approved",
+    message: `Admin access for ${request.email} was approved as ${approvedRole.toUpperCase()} by ${req.admin?.fullName || "Master Admin"}.`,
+    type: "request",
+    link: "database",
+  });
+
   const responseMessage = emailSent
     ? `Admin request approved as ${approvedRole}, and login password was emailed to ${request.email}.`
     : `Admin request approved as ${approvedRole}, but email sending failed (${emailError}). Generated Password: ${tempPassword}`;
@@ -568,6 +579,15 @@ const createAdminRequest = asyncHandler(async (req, res) => {
     requestedBy: requestedBy || "",
   });
 
+  // Notify Master Admins about new elevation request
+  await sendNotification({
+    recipientRole: "admin",
+    title: "New Elevation Request",
+    message: `${normalizedEmail} requested elevation to ${requestedRole.toUpperCase()} role.`,
+    type: "request",
+    link: "requests",
+  });
+
   return res.status(201).json({
     success: true,
     statusCode: 201,
@@ -588,6 +608,15 @@ const rejectAdminRequest = asyncHandler(async (req, res) => {
 
   request.status = "rejected";
   await request.save();
+
+  // Notify admins
+  await sendNotification({
+    recipientRole: "admin",
+    title: "Elevation Request Rejected",
+    message: `Admin access request for ${request.email} was rejected by ${req.admin?.fullName || "Master Admin"}.`,
+    type: "request",
+    link: "requests",
+  });
 
   return res.status(200).json({
     success: true,
@@ -662,11 +691,77 @@ const commentOnEntity = asyncHandler(async (req, res) => {
     comment,
   });
 
+  // Notify admins and entity owner about the new comment
+  const adminName = req.admin.fullName || req.admin.email || "Admin";
+  await sendNotification({
+    recipientRole: "admin",
+    title: `New Note on ${entityType}`,
+    message: `${adminName} added note on ${entityType}: "${comment.length > 70 ? comment.substring(0, 67) + "..." : comment}"`,
+    type: "comment",
+    link: "database",
+  });
+
+  if (entityType === "customer") {
+    await sendNotification({
+      recipientRole: "customer",
+      recipientId: entityId,
+      title: "Note from Admin Support",
+      message: `Administrator left a note regarding your account: "${comment.length > 70 ? comment.substring(0, 67) + "..." : comment}"`,
+      type: "comment",
+    });
+  } else if (entityType === "worker") {
+    await sendNotification({
+      recipientRole: "worker",
+      recipientId: entityId,
+      title: "Note from Admin Support",
+      message: `Administrator left a note regarding your account: "${comment.length > 70 ? comment.substring(0, 67) + "..." : comment}"`,
+      type: "comment",
+    });
+  } else if (entityType === "serviceRequest") {
+    const sReq = await ServiceRequest.findById(entityId);
+    if (sReq?.customerId) {
+      await sendNotification({
+        recipientRole: "customer",
+        recipientId: sReq.customerId,
+        title: "Admin Note on Service Request",
+        message: `Administrator left a note on request #${entityId.toString().slice(-6)}: "${comment.length > 70 ? comment.substring(0, 67) + "..." : comment}"`,
+        type: "comment",
+      });
+    }
+    if (sReq?.workerId) {
+      await sendNotification({
+        recipientRole: "worker",
+        recipientId: sReq.workerId,
+        title: "Admin Note on Service Request",
+        message: `Administrator left a note on request #${entityId.toString().slice(-6)}: "${comment.length > 70 ? comment.substring(0, 67) + "..." : comment}"`,
+        type: "comment",
+      });
+    }
+  }
+
   return res.status(201).json({
     success: true,
     statusCode: 201,
     data: adminComment,
     message: "Comment saved successfully",
+  });
+});
+
+const getEntityComments = asyncHandler(async (req, res) => {
+  const { entityType, entityId } = req.params;
+  if (!entityType || !entityId) {
+    throw new ApiError(400, "entityType and entityId are required");
+  }
+
+  const comments = await AdminComment.find({ entityType, entityId })
+    .populate("adminId", "fullName email role profilePhoto")
+    .sort({ createdAt: -1 });
+
+  return res.status(200).json({
+    success: true,
+    statusCode: 200,
+    data: comments,
+    message: "Comments retrieved successfully",
   });
 });
 
@@ -702,6 +797,49 @@ const editEntity = asyncHandler(async (req, res) => {
 
   const updated = await model.findByIdAndUpdate(entityId, patch, { new: true });
   if (!updated) throw new ApiError(404, `${entityType} not found`);
+
+  // Send necessary notification to the edited entity owner
+  if (entityType === "customer") {
+    await sendNotification({
+      recipientRole: "customer",
+      recipientId: updated._id,
+      title: "Profile Edited by Administrator",
+      message: `Your account details (${Object.keys(patch).join(", ")}) were updated by platform administrator.`,
+      type: "system",
+    });
+  } else if (entityType === "worker") {
+    await sendNotification({
+      recipientRole: "worker",
+      recipientId: updated._id,
+      title: "Worker Profile Edited by Administrator",
+      message: `Your worker profile (${Object.keys(patch).join(", ")}) was updated by platform administrator.`,
+      type: "system",
+    });
+  } else if (entityType === "serviceRequest") {
+    const changeDesc = patch.orderStatus
+      ? `status changed to ${patch.orderStatus}`
+      : patch.quoteAmount
+      ? `quote updated to ₹${patch.quoteAmount}`
+      : `details updated`;
+    if (updated.customerId) {
+      await sendNotification({
+        recipientRole: "customer",
+        recipientId: updated.customerId,
+        title: "Service Request Updated",
+        message: `Your request #${updated._id.toString().slice(-6)} was updated: ${changeDesc}.`,
+        type: "order",
+      });
+    }
+    if (updated.workerId) {
+      await sendNotification({
+        recipientRole: "worker",
+        recipientId: updated.workerId,
+        title: "Service Request Updated",
+        message: `Service request #${updated._id.toString().slice(-6)} was updated: ${changeDesc}.`,
+        type: "order",
+      });
+    }
+  }
 
   return res.status(200).json({
     success: true,
@@ -1234,6 +1372,7 @@ export {
   createAdminRequest,
   runAdminApiCall,
   commentOnEntity,
+  getEntityComments,
   editEntity,
   executeAdminAction,
   getCurrentAdmin,

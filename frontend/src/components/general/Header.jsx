@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import 'bootstrap-icons/font/bootstrap-icons.css';
+import NotificationBell from '../common/NotificationBell.jsx';
 
 const Header = () => {
   const [location, setLocation] = useState('');
@@ -40,7 +41,7 @@ const Header = () => {
   return (
     <>
       {/* Added 'navbar navbar-expand-lg' to enable the collapsing behavior */}
-      <header className="stylish-header sticky-top z-3 navbar navbar-expand-lg navbar-light bg-white py-2 py-lg-3">
+      <header className="stylish-header sticky-top navbar navbar-expand-lg navbar-light bg-white py-2 py-lg-3" style={{ zIndex: 1200 }}>
         <div className="container-fluid px-3 px-lg-4">
 
           {/* --- Logo --- */}
@@ -48,6 +49,11 @@ const Header = () => {
             <i className="bi bi-tools"></i>
             Karigar
           </a>
+
+          {/* --- Notification Bell (Mobile) --- */}
+          <div className="d-lg-none me-2">
+            <NotificationBell role="customer" />
+          </div>
 
           {/* --- Mobile Toggle Button (Hamburger) --- */}
           <button
@@ -116,9 +122,12 @@ const Header = () => {
             {/* --- Right Side Actions (Location & Search) --- */}
             {/* Stack on mobile (flex-column), row on large screens (flex-lg-row) */}
             <div className="d-flex flex-column flex-lg-row align-items-stretch align-items-lg-center gap-3 justify-content-end">
+              <div className="d-none d-lg-block">
+                <NotificationBell role="customer" />
+              </div>
 
-              {/* Location Input - Full width on mobile */}
-              <div className="input-group input-group-stylish rounded-pill w-100 w-lg-auto" style={{ maxWidth: '100%', minWidth: '250px', lgMaxWidth: '320px' }}>
+              {/* Location Input - Responsive width */}
+              <div className="input-group input-group-stylish rounded-pill w-100" style={{ maxWidth: '340px' }}>
                 <span className="input-group-text ps-3">
                   <i className="bi bi-geo-alt-fill"></i>
                 </span>

@@ -191,9 +191,9 @@ const Edit_worker = () => {
   };
 
   return (
-    <div className="container mt-5">
+    <div className="container my-3 my-sm-5 px-3">
       <div
-        className="card shadow p-4"
+        className="card shadow p-3 p-sm-4"
         style={{ maxWidth: "600px", margin: "0 auto", borderRadius: "16px" }}
       >
         <h3 className="text-center mb-4">Edit Worker Profile</h3>
@@ -362,7 +362,7 @@ const Edit_worker = () => {
           <div className="text-end mt-4 pt-3 border-top">
             <button
               type="button"
-              className="btn btn-primary"
+              className="btn btn-primary w-100 w-sm-auto"
               onClick={() =>
                 navigate("/worker", {
                   state: { ...workerData, ...form, profilePhoto, workingCategory },

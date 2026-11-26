@@ -17,14 +17,25 @@ const Worker = () => {
     }
   }, [location.state, setWorker]);
   console.log(worker);
-  if (!worker) return <p style={{ textAlign: "center", marginTop: "50px" }}>Loading worker info...</p>;
+  if (!worker) {
+    return (
+      <div className="d-flex justify-content-center align-items-center min-vh-100">
+        <div className="text-center">
+          <div className="spinner-border text-primary mb-3" role="status" />
+          <p className="text-muted">Loading worker info...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <>
+    <div className="d-flex flex-column min-vh-100 bg-light">
       <Header_worker isOnline={isOnline} />
-      <Worker_middle isOnline={isOnline} setIsOnline={setIsOnline} worker={worker} />
-      <Footer />
-    </>
+      <main className="flex-grow-1 d-flex align-items-center py-2 py-md-4">
+        <Worker_middle isOnline={isOnline} setIsOnline={setIsOnline} worker={worker} />
+      </main>
+      <Footer compact />
+    </div>
   );
 };
 

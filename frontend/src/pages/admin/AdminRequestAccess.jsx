@@ -25,8 +25,8 @@ const AdminRequestAccess = () => {
 
   return (
     <div className="min-vh-100 d-flex align-items-center justify-content-center p-3" style={{ background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)" }}>
-      <div className="card shadow-lg rounded-4 border-0 p-4" style={{ width: "100%", maxWidth: "540px" }}>
-        <div className="card-body">
+      <div className="card shadow-lg rounded-4 border-0 p-3 p-sm-4" style={{ width: "100%", maxWidth: "540px" }}>
+        <div className="card-body p-2 p-sm-3">
           <div className="text-center mb-4">
             <div className="d-inline-flex p-3 rounded-4 bg-primary bg-opacity-10 text-primary fs-3 mb-3">
               🛡️

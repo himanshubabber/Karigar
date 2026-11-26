@@ -4,6 +4,7 @@ import { useAdmin } from "../../Context/Admin_context.jsx";
 import ProtectedRoute_admin from "../../components/ProtectedRoute_admin.jsx";
 import { useNavigate } from "react-router-dom";
 import { MdOutlineEdit } from "react-icons/md";
+import NotificationBell from "../../components/common/NotificationBell.jsx";
 import {
   FaUsers,
   FaWrench,
@@ -199,15 +200,44 @@ const AdminDashboard = () => {
   const [modalComment, setModalComment] = useState("");
   const [modalEditField, setModalEditField] = useState("");
   const [modalEditValue, setModalEditValue] = useState("");
+  const [activeEntityComments, setActiveEntityComments] = useState([]);
+  const [loadingComments, setLoadingComments] = useState(false);
+  const [copiedId, setCopiedId] = useState(null);
 
   const authHeaders = useMemo(() => ({ Authorization: `Bearer ${token}` }), [token]);
   const apiBaseUrl = import.meta.env.VITE_API_URL || "https://karigarbackend.vercel.app";
+
+  const adminContextNotifications = useMemo(() => {
+    const list = [];
+    if (requests && requests.length > 0) {
+      requests.forEach((r) => {
+        list.push({
+          _id: `local-req-${r._id}`,
+          title: `Elevation Request`,
+          message: `${r.email} requested upgrade to ${r.requestedRole?.toUpperCase()} role.`,
+          type: "elevation",
+          link: "requests",
+          createdAt: r.createdAt || new Date(),
+          isRead: false,
+        });
+      });
+    }
+    return list;
+  }, [requests]);
 
   const showToast = (message, type = "success") => {
     setToast({ message, type });
     setTimeout(() => {
       setToast(null);
     }, 4000);
+  };
+
+  const handleCopyId = (id) => {
+    if (!id) return;
+    navigator.clipboard.writeText(id);
+    setCopiedId(id);
+    showToast("ID copied to clipboard!", "success");
+    setTimeout(() => setCopiedId(null), 2000);
   };
 
   useEffect(() => {
@@ -472,10 +502,23 @@ const AdminDashboard = () => {
   };
 
   // Entity Modal Handlers
-  const openCommentModal = (entityType, entity) => {
+  const openCommentModal = async (entityType, entity) => {
     setActiveEntity({ entityType, ...entity });
     setModalComment("");
+    setActiveEntityComments([]);
     setModalType("comment");
+    setLoadingComments(true);
+    try {
+      const res = await axios.get(
+        `${apiBaseUrl}/api/v1/admin/comments/${entityType}/${entity._id}`,
+        { headers: authHeaders, withCredentials: true }
+      );
+      setActiveEntityComments(res.data?.data || []);
+    } catch (err) {
+      console.error("Comments fetch error:", err.message);
+    } finally {
+      setLoadingComments(false);
+    }
   };
 
   const openEditModal = (entityType, entity) => {
@@ -493,6 +536,7 @@ const AdminDashboard = () => {
   const closeModal = () => {
     setModalType(null);
     setActiveEntity(null);
+    setActiveEntityComments([]);
   };
 
   const handleModalCommentSubmit = async (e) => {
@@ -508,8 +552,16 @@ const AdminDashboard = () => {
         },
         { headers: authHeaders, withCredentials: true }
       );
-      showToast("Comment added successfully!", "success");
-      closeModal();
+      showToast("Comment saved successfully!", "success");
+      setModalComment("");
+      // Refresh comments list
+      try {
+        const res = await axios.get(
+          `${apiBaseUrl}/api/v1/admin/comments/${activeEntity.entityType}/${activeEntity._id}`,
+          { headers: authHeaders, withCredentials: true }
+        );
+        setActiveEntityComments(res.data?.data || []);
+      } catch (e) {}
     } catch (err) {
       showToast("Comment failed: " + (err.response?.data?.message || err.message), "danger");
     }
@@ -624,25 +676,114 @@ const AdminDashboard = () => {
     <ProtectedRoute_admin isAuthenticated={Boolean(token)}>
       <div className="d-flex flex-column flex-md-row min-vh-100 bg-light" style={{ fontFamily: "Inter, sans-serif" }}>
         
-        {/* Mobile Header */}
-        <div className="d-md-none bg-dark text-white p-3 d-flex justify-content-between align-items-center shadow-sm">
+        {/* Scoped styles for hover reveal and interactive IDs */}
+        <style>{`
+          .hover-reveal-content {
+            display: inline-block;
+            max-width: 220px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            vertical-align: middle;
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+          }
+          .hover-reveal-content:hover {
+            white-space: normal !important;
+            overflow: visible !important;
+            max-width: 420px !important;
+            background: #ffffff !important;
+            color: #0f172a !important;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18) !important;
+            border-radius: 6px !important;
+            padding: 4px 8px !important;
+            z-index: 100 !important;
+            position: relative !important;
+          }
+          .id-badge-copy {
+            transition: all 0.15s ease-in-out;
+            cursor: pointer;
+          }
+          .id-badge-copy:hover {
+            background-color: #e2e8f0 !important;
+            border-color: #94a3b8 !important;
+          }
+        `}</style>
+
+        {/* Mobile Header (Sticky) */}
+        <div className="d-md-none bg-dark text-white p-3 d-flex justify-content-between align-items-center shadow-sm sticky-top" style={{ zIndex: 1020 }}>
           <div className="d-flex align-items-center gap-2">
             <span className="p-2 rounded-3 bg-primary text-white fw-bold"><FaWrench /></span>
             <span className="fw-bold fs-5">Karigar Admin</span>
           </div>
-          <button className="btn btn-sm btn-outline-light" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-            <FaBars />
-          </button>
+          <div className="d-flex align-items-center gap-2">
+            <NotificationBell
+              role="admin"
+              apiBaseUrl={apiBaseUrl}
+              authHeaders={authHeaders}
+              extraNotifications={adminContextNotifications}
+              onNavigate={(tabKey) => {
+                if (tabKey) setActiveTab(tabKey);
+              }}
+              isDark={true}
+            />
+            <button
+              type="button"
+              className="btn btn-sm btn-outline-light"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Toggle navigation"
+            >
+              <FaBars />
+            </button>
+          </div>
         </div>
 
-        {/* Sidebar */}
+        {/* Mobile Menu Backdrop */}
+        {mobileMenuOpen && (
+          <div
+            className="d-md-none position-fixed top-0 start-0 w-100 h-100 bg-black bg-opacity-50"
+            style={{ zIndex: 1040 }}
+            onClick={() => setMobileMenuOpen(false)}
+          />
+        )}
+
+        {/* Sidebar Drawer */}
         <aside
           className={`bg-dark text-white p-3 d-flex flex-column shadow-lg ${
-            mobileMenuOpen ? "d-block" : "d-none d-md-flex"
+            mobileMenuOpen
+              ? "position-fixed top-0 start-0 h-100 d-flex flex-column"
+              : "d-none d-md-flex"
           }`}
-          style={{ width: mobileMenuOpen ? "100%" : "270px", minWidth: "270px" }}
+          style={{
+            width: mobileMenuOpen ? "min(82vw, 300px)" : "270px",
+            minWidth: mobileMenuOpen ? "auto" : "270px",
+            zIndex: 1050,
+            overflowY: "auto",
+          }}
         >
-          {/* Logo Brand */}
+          {/* Mobile Drawer Header with Close Button */}
+          <div className="d-flex d-md-none justify-content-between align-items-center pb-3 mb-3 border-bottom border-secondary">
+            <div className="d-flex align-items-center gap-2">
+              <div className="rounded-3 bg-primary p-2 text-white shadow-sm d-flex align-items-center justify-content-center" style={{ width: 34, height: 34 }}>
+                <FaWrench />
+              </div>
+              <div>
+                <h6 className="mb-0 fw-bold text-white tracking-wide">KARIGAR ADMIN</h6>
+                <small className="text-secondary" style={{ fontSize: "10px" }}>Management Console</small>
+              </div>
+            </div>
+            <button
+              type="button"
+              className="btn btn-sm btn-outline-secondary text-white rounded-circle p-1 d-flex align-items-center justify-content-center"
+              style={{ width: 32, height: 32 }}
+              onClick={() => setMobileMenuOpen(false)}
+              aria-label="Close menu"
+            >
+              <FaTimes />
+            </button>
+          </div>
+
+          {/* Logo Brand (Desktop) */}
           <div className="d-none d-md-flex align-items-center gap-2 pb-3 mb-3 border-bottom border-secondary">
             <div className="rounded-3 bg-primary p-2 text-white shadow-sm d-flex align-items-center justify-content-center" style={{ width: 38, height: 38 }}>
               <FaWrench />
@@ -744,9 +885,9 @@ const AdminDashboard = () => {
         </aside>
 
         {/* Main Content Area */}
-        <main className="flex-grow-1 p-3 p-md-4 overflow-auto">
+        <main className="flex-grow-1 p-2 p-sm-3 p-md-4 overflow-auto" style={{ minWidth: 0 }}>
           {/* Header Action Bar */}
-          <header className="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3 mb-4 pb-2 border-bottom">
+          <header className="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3 mb-3 mb-md-4 pb-2 border-bottom">
             <div>
               <h4 className="fw-bold mb-1 text-dark">
                 {tabs.find((t) => t.key === activeTab)?.label}
@@ -761,7 +902,16 @@ const AdminDashboard = () => {
               </p>
             </div>
 
-            <div className="d-flex flex-wrap align-items-center gap-2">
+            <div className="d-flex flex-wrap align-items-center gap-2 w-100 w-sm-auto justify-content-between justify-content-sm-end">
+              <NotificationBell
+                role="admin"
+                apiBaseUrl={apiBaseUrl}
+                authHeaders={authHeaders}
+                extraNotifications={adminContextNotifications}
+                onNavigate={(tabKey) => {
+                  if (tabKey) setActiveTab(tabKey);
+                }}
+              />
               {lastRefreshed && (
                 <span className="text-muted small d-none d-lg-inline me-2">
                   <FaClock className="me-1" /> Refreshed: {lastRefreshed}
@@ -814,7 +964,7 @@ const AdminDashboard = () => {
                       <h2 className="fw-bold mb-0 text-dark mt-1">{summary?.customerCount ?? users.customers?.length ?? "0"}</h2>
                       <small className="text-success fw-semibold"><FaUserCheck className="me-1" />Registered</small>
                     </div>
-                    <div className="p-3 rounded-4 bg-primary bg-opacity-10 text-primary fs-4"><FaUsers /></div>
+                    <div className="p-2 p-sm-3 rounded-4 bg-primary bg-opacity-10 text-primary fs-5 fs-sm-4"><FaUsers /></div>
                   </div>
                 </div>
               </div>
@@ -827,7 +977,7 @@ const AdminDashboard = () => {
                       <h2 className="fw-bold mb-0 text-dark mt-1">{summary?.workerCount ?? users.workers?.length ?? "0"}</h2>
                       <small className="text-success fw-semibold">{summary?.activeWorkers ?? 0} Available Now</small>
                     </div>
-                    <div className="p-3 rounded-4 bg-success bg-opacity-10 text-success fs-4"><FaWrench /></div>
+                    <div className="p-2 p-sm-3 rounded-4 bg-success bg-opacity-10 text-success fs-5 fs-sm-4"><FaWrench /></div>
                   </div>
                 </div>
               </div>
@@ -840,7 +990,7 @@ const AdminDashboard = () => {
                       <h2 className="fw-bold mb-0 text-dark mt-1">{summary?.requestCount ?? users.serviceRequests?.length ?? "0"}</h2>
                       <small className="text-info fw-semibold"><FaCheckDouble className="me-1" />{summary?.completedRequests ?? 0} Completed</small>
                     </div>
-                    <div className="p-3 rounded-4 bg-info bg-opacity-10 text-info fs-4"><FaClipboardList /></div>
+                    <div className="p-2 p-sm-3 rounded-4 bg-info bg-opacity-10 text-info fs-5 fs-sm-4"><FaClipboardList /></div>
                   </div>
                 </div>
               </div>
@@ -853,7 +1003,7 @@ const AdminDashboard = () => {
                       <h2 className="fw-bold mb-0 text-dark mt-1">₹{summary?.totalRevenue ?? 0}</h2>
                       <small className="text-warning fw-semibold">Paid quotes total</small>
                     </div>
-                    <div className="p-3 rounded-4 bg-warning bg-opacity-10 text-warning fs-4"><FaRupeeSign /></div>
+                    <div className="p-2 p-sm-3 rounded-4 bg-warning bg-opacity-10 text-warning fs-5 fs-sm-4"><FaRupeeSign /></div>
                   </div>
                 </div>
               </div>
@@ -868,7 +1018,7 @@ const AdminDashboard = () => {
                         Manage Admins &rarr;
                       </small>
                     </div>
-                    <div className="p-3 rounded-4 bg-primary bg-opacity-10 text-primary fs-4"><FaUserShield /></div>
+                    <div className="p-2 p-sm-3 rounded-4 bg-primary bg-opacity-10 text-primary fs-5 fs-sm-4"><FaUserShield /></div>
                   </div>
                 </div>
               </div>
@@ -885,29 +1035,29 @@ const AdminDashboard = () => {
                         {summary?.blockedCustomers ?? 0} Customers, {summary?.blockedWorkers ?? 0} Workers
                       </small>
                     </div>
-                    <div className="p-3 rounded-4 bg-danger bg-opacity-10 text-danger fs-4"><FaBan /></div>
+                    <div className="p-2 p-sm-3 rounded-4 bg-danger bg-opacity-10 text-danger fs-5 fs-sm-4"><FaBan /></div>
                   </div>
                 </div>
               </div>
 
               <div className="col-12 col-xl-6">
-                <div className="card border-0 shadow-sm rounded-4 h-100 p-4 bg-white">
+                <div className="card border-0 shadow-sm rounded-4 h-100 p-3 p-sm-4 bg-white">
                   <h6 className="fw-bold text-dark mb-3">Service Order Lifecycle</h6>
-                  <div className="row text-center g-3">
+                  <div className="row text-center g-2 g-sm-3">
                     <div className="col-4">
-                      <div className="p-3 rounded-3 bg-light">
+                      <div className="p-2 p-sm-3 rounded-3 bg-light">
                         <small className="text-muted d-block mb-1">Pending</small>
                         <h4 className="fw-bold mb-0 text-warning">{summary?.pendingRequests ?? 0}</h4>
                       </div>
                     </div>
                     <div className="col-4">
-                      <div className="p-3 rounded-3 bg-light">
+                      <div className="p-2 p-sm-3 rounded-3 bg-light">
                         <small className="text-muted d-block mb-1">In Progress</small>
                         <h4 className="fw-bold mb-0 text-info">{summary?.inProgressRequests ?? 0}</h4>
                       </div>
                     </div>
                     <div className="col-4">
-                      <div className="p-3 rounded-3 bg-light">
+                      <div className="p-2 p-sm-3 rounded-3 bg-light">
                         <small className="text-muted d-block mb-1">Completed</small>
                         <h4 className="fw-bold mb-0 text-success">{summary?.completedRequests ?? 0}</h4>
                       </div>
@@ -920,43 +1070,46 @@ const AdminDashboard = () => {
 
           {/* TAB 2: DATABASE */}
           {activeTab === "database" && (
-            <div className="card border-0 shadow-sm rounded-4 p-4 bg-white">
-              <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
-                <div className="btn-group p-1 bg-light rounded-pill border">
+            <div className="card border-0 shadow-sm rounded-4 p-3 p-sm-4 bg-white">
+              <div className="d-flex flex-column flex-xl-row justify-content-between align-items-stretch align-items-xl-center gap-3 mb-4">
+                <div
+                  className="d-flex flex-nowrap overflow-x-auto gap-1 p-1 bg-light rounded-pill border"
+                  style={{ WebkitOverflowScrolling: "touch", maxWidth: "100%" }}
+                >
                   <button
-                    className={`btn btn-sm rounded-pill px-3 ${dbSubTab === "customers" ? "btn-primary shadow-sm" : "text-muted"}`}
+                    className={`btn btn-sm rounded-pill px-3 text-nowrap flex-shrink-0 ${dbSubTab === "customers" ? "btn-primary shadow-sm" : "text-muted"}`}
                     onClick={() => { setDbSubTab("customers"); setStatusFilter("all"); }}
                   >
                     Customers ({users.customers?.length || 0})
                   </button>
                   <button
-                    className={`btn btn-sm rounded-pill px-3 ${dbSubTab === "workers" ? "btn-primary shadow-sm" : "text-muted"}`}
+                    className={`btn btn-sm rounded-pill px-3 text-nowrap flex-shrink-0 ${dbSubTab === "workers" ? "btn-primary shadow-sm" : "text-muted"}`}
                     onClick={() => { setDbSubTab("workers"); setStatusFilter("all"); }}
                   >
                     Workers ({users.workers?.length || 0})
                   </button>
                   <button
-                    className={`btn btn-sm rounded-pill px-3 ${dbSubTab === "requests" ? "btn-primary shadow-sm" : "text-muted"}`}
+                    className={`btn btn-sm rounded-pill px-3 text-nowrap flex-shrink-0 ${dbSubTab === "requests" ? "btn-primary shadow-sm" : "text-muted"}`}
                     onClick={() => { setDbSubTab("requests"); setStatusFilter("all"); }}
                   >
                     Requests ({users.serviceRequests?.length || 0})
                   </button>
                   <button
-                    className={`btn btn-sm rounded-pill px-3 ${dbSubTab === "admins" ? "btn-primary shadow-sm" : "text-muted"}`}
+                    className={`btn btn-sm rounded-pill px-3 text-nowrap flex-shrink-0 ${dbSubTab === "admins" ? "btn-primary shadow-sm" : "text-muted"}`}
                     onClick={() => { setDbSubTab("admins"); setStatusFilter("all"); }}
                   >
                     Admins ({users.admins?.length || 0})
                   </button>
                   <button
-                    className={`btn btn-sm rounded-pill px-3 ${dbSubTab === "messages" ? "btn-primary shadow-sm" : "text-muted"}`}
+                    className={`btn btn-sm rounded-pill px-3 text-nowrap flex-shrink-0 ${dbSubTab === "messages" ? "btn-primary shadow-sm" : "text-muted"}`}
                     onClick={() => { setDbSubTab("messages"); setStatusFilter("all"); }}
                   >
                     Message Log ({messages?.length || 0})
                   </button>
                 </div>
 
-                <div className="d-flex flex-wrap gap-2 w-100 w-md-auto">
-                  <div className="input-group input-group-sm" style={{ minWidth: "220px" }}>
+                <div className="d-flex flex-column flex-sm-row flex-wrap gap-2 w-100 w-xl-auto">
+                  <div className="input-group input-group-sm flex-grow-1" style={{ minWidth: "180px" }}>
                     <span className="input-group-text bg-light border-end-0"><FaSearch className="text-muted" /></span>
                     <input
                       type="text"
@@ -974,8 +1127,8 @@ const AdminDashboard = () => {
 
                   {dbSubTab !== "messages" && (
                     <select
-                      className="form-select form-select-sm"
-                      style={{ width: "auto" }}
+                      className="form-select form-select-sm flex-grow-1 flex-sm-grow-0"
+                      style={{ minWidth: "130px" }}
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value)}
                     >
@@ -1002,7 +1155,7 @@ const AdminDashboard = () => {
               {dbSubTab === "customers" && (
                 <div className="table-responsive">
                   <table className="table table-hover align-middle mb-0">
-                    <thead className="table-light text-muted small text-uppercase">
+                    <thead className="table-light text-muted small text-uppercase text-nowrap">
                       <tr>
                         <th>Customer</th>
                         <th>Email</th>
@@ -1029,16 +1182,30 @@ const AdminDashboard = () => {
                                   )}
                                   <div>
                                     <div className="fw-semibold text-dark">{c.fullName || "Unnamed"}</div>
-                                    <small className="text-muted" style={{ fontSize: "11px" }}>ID: {c._id}</small>
+                                    <div className="d-flex align-items-center gap-1">
+                                      <span
+                                        className="badge bg-light text-secondary border font-monospace id-badge-copy"
+                                        style={{ fontSize: "11px" }}
+                                        onClick={() => handleCopyId(c._id)}
+                                        title="Click to copy full Customer ID"
+                                      >
+                                        {c._id} {copiedId === c._id ? <FaCheck className="text-success ms-1" /> : <FaCopy className="ms-1 opacity-50" />}
+                                      </span>
+                                    </div>
                                   </div>
                                 </div>
                               </td>
-                              <td>{c.email}</td>
-                              <td>{c.phone || "—"}</td>
-                              <td style={{ maxWidth: 200 }} className="text-truncate" title={typeof c.address === "object" ? JSON.stringify(c.address) : c.address}>
-                                {typeof c.address === "object" ? JSON.stringify(c.address) : c.address || "—"}
-                              </td>
+                              <td className="text-nowrap">{c.email}</td>
+                              <td className="text-nowrap">{c.phone || "—"}</td>
                               <td>
+                                <span
+                                  className="hover-reveal-content text-secondary"
+                                  title={typeof c.address === "object" ? JSON.stringify(c.address) : c.address || "—"}
+                                >
+                                  {typeof c.address === "object" ? JSON.stringify(c.address) : c.address || "—"}
+                                </span>
+                              </td>
+                              <td className="text-nowrap">
                                 {isBlocked ? (
                                   <span className="badge bg-danger rounded-pill px-2 py-1">
                                     Blocked until {new Date(c.suspendedUntil).toLocaleDateString()}
@@ -1047,8 +1214,8 @@ const AdminDashboard = () => {
                                   <span className="badge bg-success bg-opacity-10 text-success rounded-pill px-2 py-1">Active</span>
                                 )}
                               </td>
-                              <td className="text-end">
-                                <div className="btn-group btn-group-sm">
+                              <td className="text-end text-nowrap">
+                                <div className="btn-group btn-group-sm flex-nowrap">
                                   <button className="btn btn-outline-secondary" onClick={() => openCommentModal("customer", c)} title="Add note"><FaCommentAlt /></button>
                                   <button className="btn btn-outline-primary" onClick={() => openEditModal("customer", c)} title="Edit"><FaEdit /></button>
                                   <button
@@ -1082,7 +1249,7 @@ const AdminDashboard = () => {
               {dbSubTab === "workers" && (
                 <div className="table-responsive">
                   <table className="table table-hover align-middle mb-0">
-                    <thead className="table-light text-muted small text-uppercase">
+                    <thead className="table-light text-muted small text-uppercase text-nowrap">
                       <tr>
                         <th>Worker</th>
                         <th>Email</th>
@@ -1109,22 +1276,31 @@ const AdminDashboard = () => {
                                   )}
                                   <div>
                                     <div className="fw-semibold text-dark">{w.fullName || "Unnamed"}</div>
-                                    <small className="text-muted" style={{ fontSize: "11px" }}>ID: {w._id}</small>
+                                    <div className="d-flex align-items-center gap-1">
+                                      <span
+                                        className="badge bg-light text-secondary border font-monospace id-badge-copy"
+                                        style={{ fontSize: "11px" }}
+                                        onClick={() => handleCopyId(w._id)}
+                                        title="Click to copy full Worker ID"
+                                      >
+                                        {w._id} {copiedId === w._id ? <FaCheck className="text-success ms-1" /> : <FaCopy className="ms-1 opacity-50" />}
+                                      </span>
+                                    </div>
                                   </div>
                                 </div>
                               </td>
-                              <td>{w.email}</td>
-                              <td>{w.phone || "—"}</td>
+                              <td className="text-nowrap">{w.email}</td>
+                              <td className="text-nowrap">{w.phone || "—"}</td>
                               <td>
                                 {w.workingCategory && w.workingCategory.length > 0 ? (
                                   <div className="d-flex flex-wrap gap-1">
                                     {w.workingCategory.map((cat, idx) => (
-                                      <span key={idx} className="badge bg-light text-dark border">{cat}</span>
+                                      <span key={idx} className="badge bg-light text-dark border text-nowrap">{cat}</span>
                                     ))}
                                   </div>
                                 ) : "—"}
                               </td>
-                              <td>
+                              <td className="text-nowrap">
                                 {isBlocked ? (
                                   <span className="badge bg-danger rounded-pill px-2 py-1">Blocked</span>
                                 ) : (
@@ -1133,8 +1309,8 @@ const AdminDashboard = () => {
                                   </span>
                                 )}
                               </td>
-                              <td className="text-end">
-                                <div className="btn-group btn-group-sm">
+                              <td className="text-end text-nowrap">
+                                <div className="btn-group btn-group-sm flex-nowrap">
                                   <button className="btn btn-outline-secondary" onClick={() => openCommentModal("worker", w)} title="Add note"><FaCommentAlt /></button>
                                   <button className="btn btn-outline-primary" onClick={() => openEditModal("worker", w)} title="Edit"><FaEdit /></button>
                                   <button
@@ -1168,7 +1344,7 @@ const AdminDashboard = () => {
               {dbSubTab === "requests" && (
                 <div className="table-responsive">
                   <table className="table table-hover align-middle mb-0">
-                    <thead className="table-light text-muted small text-uppercase">
+                    <thead className="table-light text-muted small text-uppercase text-nowrap">
                       <tr>
                         <th>Order ID / Category</th>
                         <th>Customer</th>
@@ -1184,27 +1360,44 @@ const AdminDashboard = () => {
                         filteredRequests.map((req) => (
                           <tr key={req._id}>
                             <td>
-                              <div className="fw-bold text-dark text-capitalize">{req.category || "Service Request"}</div>
-                              <small className="text-muted font-monospace" style={{ fontSize: "11px" }}>#{req._id.substring(req._id.length - 8)}</small>
+                              <div className="fw-bold text-dark text-capitalize text-nowrap">{req.category || "Service Request"}</div>
+                              <div className="d-flex align-items-center gap-1 mt-1">
+                                <span
+                                  className="badge bg-light text-secondary border font-monospace id-badge-copy"
+                                  style={{ fontSize: "11px", letterSpacing: "0.5px" }}
+                                  onClick={() => handleCopyId(req._id)}
+                                  title="Click to copy full Service Request ID"
+                                >
+                                  {req._id} {copiedId === req._id ? <FaCheck className="text-success ms-1" /> : <FaCopy className="ms-1 opacity-50" />}
+                                </span>
+                              </div>
+                              {req.description && (
+                                <div
+                                  className="hover-reveal-content text-muted small mt-1"
+                                  title={req.description}
+                                >
+                                  {req.description}
+                                </div>
+                              )}
                             </td>
                             <td>
                               {req.customerId ? (
                                 <div>
-                                  <div className="fw-semibold text-dark">{req.customerId.fullName}</div>
-                                  <small className="text-muted">{req.customerId.email || req.customerId.phone}</small>
+                                  <div className="fw-semibold text-dark text-nowrap">{req.customerId.fullName}</div>
+                                  <small className="text-muted text-nowrap">{req.customerId.email || req.customerId.phone}</small>
                                 </div>
                               ) : "—"}
                             </td>
                             <td>
                               {req.workerId ? (
                                 <div>
-                                  <div className="fw-semibold text-dark">{req.workerId.fullName}</div>
-                                  <small className="text-muted">{req.workerId.phone || req.workerId.email}</small>
+                                  <div className="fw-semibold text-dark text-nowrap">{req.workerId.fullName}</div>
+                                  <small className="text-muted text-nowrap">{req.workerId.phone || req.workerId.email}</small>
                                 </div>
                               ) : <span className="text-muted italic">Unassigned</span>}
                             </td>
-                            <td><span className="fw-bold text-dark">{req.quoteAmount ? `₹${req.quoteAmount}` : "—"}</span></td>
-                            <td>
+                            <td className="text-nowrap"><span className="fw-bold text-dark">{req.quoteAmount ? `₹${req.quoteAmount}` : "—"}</span></td>
+                            <td className="text-nowrap">
                               <span
                                 className={`badge rounded-pill px-2 py-1 ${
                                   req.orderStatus === "completed"
@@ -1219,9 +1412,9 @@ const AdminDashboard = () => {
                                 {req.orderStatus || "pending"}
                               </span>
                             </td>
-                            <td className="small text-muted">{new Date(req.createdAt).toLocaleDateString()}</td>
-                            <td className="text-end">
-                              <div className="btn-group btn-group-sm">
+                            <td className="small text-muted text-nowrap">{new Date(req.createdAt).toLocaleDateString()}</td>
+                            <td className="text-end text-nowrap">
+                              <div className="btn-group btn-group-sm flex-nowrap">
                                 <button className="btn btn-outline-secondary" onClick={() => openCommentModal("serviceRequest", req)} title="Add note"><FaCommentAlt /></button>
                                 <button className="btn btn-outline-primary" onClick={() => openEditModal("serviceRequest", req)} title="Edit Quote/Status"><FaEdit /></button>
                               </div>
@@ -1240,7 +1433,7 @@ const AdminDashboard = () => {
               {dbSubTab === "admins" && (
                 <div className="table-responsive">
                   <table className="table table-hover align-middle mb-0">
-                    <thead className="table-light text-muted small text-uppercase">
+                    <thead className="table-light text-muted small text-uppercase text-nowrap">
                       <tr>
                         <th>Administrator</th>
                         <th>Email</th>
@@ -1262,16 +1455,25 @@ const AdminDashboard = () => {
                                     {adm.fullName ? adm.fullName.charAt(0).toUpperCase() : "A"}
                                   </div>
                                   <div>
-                                    <div className="fw-semibold text-dark">
+                                    <div className="fw-semibold text-dark text-nowrap">
                                       {adm.fullName || "Admin"} {isSelf && <span className="badge bg-secondary ms-1">You</span>}
                                     </div>
-                                    <small className="text-muted font-monospace" style={{ fontSize: "11px" }}>ID: {adm._id}</small>
+                                    <div className="d-flex align-items-center gap-1">
+                                      <span
+                                        className="badge bg-light text-secondary border font-monospace id-badge-copy"
+                                        style={{ fontSize: "11px" }}
+                                        onClick={() => handleCopyId(adm._id)}
+                                        title="Click to copy full Admin ID"
+                                      >
+                                        {adm._id} {copiedId === adm._id ? <FaCheck className="text-success ms-1" /> : <FaCopy className="ms-1 opacity-50" />}
+                                      </span>
+                                    </div>
                                   </div>
                                 </div>
                               </td>
-                              <td className="fw-semibold text-dark">{adm.email}</td>
-                              <td>{getRoleBadge(adm.role)}</td>
-                              <td>
+                              <td className="fw-semibold text-dark text-nowrap">{adm.email}</td>
+                              <td className="text-nowrap">{getRoleBadge(adm.role)}</td>
+                              <td className="text-nowrap">
                                 {adm.isActive ? (
                                   <span className="badge bg-success bg-opacity-10 text-success rounded-pill px-2 py-1">
                                     <FaCheck className="me-1" /> Active Access
@@ -1282,9 +1484,9 @@ const AdminDashboard = () => {
                                   </span>
                                 )}
                               </td>
-                              <td className="small text-muted">{new Date(adm.createdAt).toLocaleDateString()}</td>
-                              <td className="text-end">
-                                <div className="btn-group btn-group-sm">
+                              <td className="small text-muted text-nowrap">{new Date(adm.createdAt).toLocaleDateString()}</td>
+                              <td className="text-end text-nowrap">
+                                <div className="btn-group btn-group-sm flex-nowrap">
                                   <button
                                     className="btn btn-outline-primary"
                                     onClick={() => handleQuickMessageAdmin(adm.email)}
@@ -1293,7 +1495,7 @@ const AdminDashboard = () => {
                                     <FaEnvelope />
                                   </button>
                                   <button
-                                    className="btn btn-outline-secondary"
+                                    className="btn btn-outline-secondary text-nowrap"
                                     onClick={() => handleUpdateAdminRole(adm._id, adm.role, adm.email)}
                                     disabled={admin?.role !== "master"}
                                     title="Change Admin Role"
@@ -1301,7 +1503,7 @@ const AdminDashboard = () => {
                                     <FaUserShield /> Role
                                   </button>
                                   <button
-                                    className={`btn ${adm.isActive ? "btn-outline-danger" : "btn-outline-success"}`}
+                                    className={`btn ${adm.isActive ? "btn-outline-danger" : "btn-outline-success"} text-nowrap`}
                                     onClick={() => handleToggleAdminActive(adm._id, adm.isActive, adm.email)}
                                     disabled={admin?.role !== "master" || isSelf}
                                     title={adm.isActive ? "Revoke Admin Access" : "Restore Admin Access"}
@@ -1325,7 +1527,7 @@ const AdminDashboard = () => {
               {dbSubTab === "messages" && (
                 <div className="table-responsive">
                   <table className="table table-hover align-middle mb-0">
-                    <thead className="table-light text-muted small text-uppercase">
+                    <thead className="table-light text-muted small text-uppercase text-nowrap">
                       <tr>
                         <th>Recipient</th>
                         <th>Subject</th>
@@ -1340,7 +1542,11 @@ const AdminDashboard = () => {
                           <tr key={m._id}>
                             <td className="fw-semibold text-dark">{m.toEmail}</td>
                             <td>{m.subject}</td>
-                            <td style={{ maxWidth: 300 }} className="text-truncate" title={m.body}>{m.body}</td>
+                            <td>
+                              <span className="hover-reveal-content text-secondary" title={m.body}>
+                                {m.body}
+                              </span>
+                            </td>
                             <td><span className="badge bg-light text-dark border">{m.sentBy}</span></td>
                             <td className="small text-muted">{new Date(m.createdAt).toLocaleString()}</td>
                           </tr>
@@ -1359,7 +1565,7 @@ const AdminDashboard = () => {
           {activeTab === "api" && (
             <div className="row g-4">
               <div className="col-12 col-lg-6">
-                <div className="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
+                <div className="card border-0 shadow-sm rounded-4 p-3 p-sm-4 bg-white h-100">
                   <div className="d-flex justify-content-between align-items-center mb-3">
                     <h5 className="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
                       <FaTerminal className="text-primary" /> API Request Console
@@ -1423,7 +1629,7 @@ const AdminDashboard = () => {
                       <label className="form-label small fw-semibold text-muted">Endpoint URL</label>
                       <div className="input-group">
                         <select
-                          className="form-select bg-light fw-bold"
+                          className="form-select bg-light fw-bold flex-shrink-0"
                           style={{ maxWidth: "115px" }}
                           value={apiForm.method}
                           onChange={(e) => {
@@ -1453,8 +1659,8 @@ const AdminDashboard = () => {
 
                     {apiForm.method !== "GET" && (
                       <div className="mb-3">
-                        <div className="d-flex justify-content-between align-items-center mb-1">
-                          <div className="d-flex align-items-center gap-2">
+                        <div className="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2 mb-2">
+                          <div className="d-flex align-items-center gap-2 flex-wrap">
                             <label className="form-label small fw-semibold text-muted mb-0">JSON Request Body</label>
                             {(() => {
                               const status = getJsonValidationStatus(apiForm.data);
@@ -1479,7 +1685,7 @@ const AdminDashboard = () => {
                               );
                             })()}
                           </div>
-                          <div className="d-flex gap-2">
+                          <div className="d-flex flex-wrap gap-1">
                             <button
                               type="button"
                               className="btn btn-sm btn-outline-primary py-0 px-2"
@@ -1554,13 +1760,13 @@ const AdminDashboard = () => {
 
               {/* API Response Viewer */}
               <div className="col-12 col-lg-6">
-                <div className="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
-                  <div className="d-flex justify-content-between align-items-center mb-3">
+                <div className="card border-0 shadow-sm rounded-4 p-3 p-sm-4 bg-white h-100">
+                  <div className="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2 mb-3">
                     <h5 className="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
                       <FaCode className="text-secondary" /> Response Viewer
                     </h5>
                     {apiResponse && (
-                      <div className="d-flex gap-2 align-items-center">
+                      <div className="d-flex flex-wrap gap-2 align-items-center">
                         <span className={`badge ${apiResponse.status >= 200 && apiResponse.status < 300 ? "bg-success" : "bg-danger"}`}>
                           {apiResponse.status} {apiResponse.statusText}
                         </span>
@@ -1582,7 +1788,7 @@ const AdminDashboard = () => {
                   {apiResponse ? (
                     <pre
                       className="p-3 rounded-3 bg-dark text-light font-monospace small overflow-auto mb-0"
-                      style={{ maxHeight: "480px" }}
+                      style={{ maxHeight: "480px", wordBreak: "break-all" }}
                     >
                       {JSON.stringify(apiResponse.data, null, 2)}
                     </pre>
@@ -1601,7 +1807,7 @@ const AdminDashboard = () => {
           {activeTab === "message" && (
             <div className="row g-4">
               <div className="col-12 col-lg-6">
-                <div className="card border-0 shadow-sm rounded-4 p-4 bg-white">
+                <div className="card border-0 shadow-sm rounded-4 p-3 p-sm-4 bg-white">
                   <h5 className="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
                     <FaEnvelope className="text-primary" /> Send Email Message
                   </h5>
@@ -1659,7 +1865,7 @@ const AdminDashboard = () => {
 
               {/* Message History */}
               <div className="col-12 col-lg-6">
-                <div className="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
+                <div className="card border-0 shadow-sm rounded-4 p-3 p-sm-4 bg-white h-100">
                   <h5 className="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
                     <FaClock className="text-secondary" /> Recent Sent Messages
                   </h5>
@@ -1673,7 +1879,7 @@ const AdminDashboard = () => {
                               <small className="text-muted">{new Date(m.createdAt).toLocaleDateString()}</small>
                             </div>
                             <div className="small fw-semibold text-primary mb-1">{m.subject}</div>
-                            <p className="text-muted small mb-0 text-truncate">{m.body}</p>
+                            <p className="hover-reveal-content text-muted small mb-0" title={m.body} style={{ maxWidth: "100%" }}>{m.body}</p>
                           </div>
                         ))}
                       </div>
@@ -1690,7 +1896,7 @@ const AdminDashboard = () => {
           {activeTab === "block" && (
             <div className="row g-4">
               <div className="col-12 col-lg-5">
-                <div className="card border-0 shadow-sm rounded-4 p-4 bg-white">
+                <div className="card border-0 shadow-sm rounded-4 p-3 p-sm-4 bg-white">
                   <h5 className="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
                     <FaBan className="text-danger" /> Suspend / Unblock User
                   </h5>
@@ -1729,7 +1935,7 @@ const AdminDashboard = () => {
 
                     <div className="mb-3">
                       <label className="form-label small fw-semibold text-muted">Action</label>
-                      <div className="d-flex gap-3">
+                      <div className="d-flex flex-wrap gap-3">
                         <label className="form-check-label">
                           <input
                             type="radio"
@@ -1779,13 +1985,13 @@ const AdminDashboard = () => {
 
               {/* Blocked Accounts Table */}
               <div className="col-12 col-lg-7">
-                <div className="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
+                <div className="card border-0 shadow-sm rounded-4 p-3 p-sm-4 bg-white h-100">
                   <h5 className="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
                     <FaBan className="text-danger" /> Currently Suspended Accounts ({allBlockedUsers.length})
                   </h5>
                   <div className="table-responsive">
                     <table className="table table-hover align-middle mb-0">
-                      <thead className="table-light text-muted small text-uppercase">
+                      <thead className="table-light text-muted small text-uppercase text-nowrap">
                         <tr>
                           <th>User</th>
                           <th>Role</th>
@@ -1798,16 +2004,16 @@ const AdminDashboard = () => {
                           allBlockedUsers.map((u) => (
                             <tr key={u._id}>
                               <td>
-                                <div className="fw-semibold text-dark">{u.fullName || "Unnamed"}</div>
-                                <small className="text-muted">{u.email}</small>
+                                <div className="fw-semibold text-dark text-nowrap">{u.fullName || "Unnamed"}</div>
+                                <small className="text-muted text-nowrap">{u.email}</small>
                               </td>
-                              <td>
+                              <td className="text-nowrap">
                                 <span className={`badge ${u.entityType === "customer" ? "bg-primary" : "bg-success"} rounded-pill text-uppercase`}>
                                   {u.entityType}
                                 </span>
                               </td>
-                              <td className="text-danger fw-semibold">{new Date(u.suspendedUntil).toLocaleString()}</td>
-                              <td className="text-end">
+                              <td className="text-danger fw-semibold text-nowrap">{new Date(u.suspendedUntil).toLocaleString()}</td>
+                              <td className="text-end text-nowrap">
                                 <button
                                   className="btn btn-sm btn-outline-success"
                                   onClick={() => handleBlockUserAction(u.entityType, u.email, null, "unblock")}
@@ -1831,8 +2037,8 @@ const AdminDashboard = () => {
 
           {/* TAB 6: ADMIN REQUESTS */}
           {activeTab === "requests" && (
-            <div className="card border-0 shadow-sm rounded-4 p-4 bg-white">
-              <div className="d-flex justify-content-between align-items-center mb-3">
+            <div className="card border-0 shadow-sm rounded-4 p-3 p-sm-4 bg-white">
+              <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
                 <h5 className="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
                   <FaKey className="text-warning" /> Pending Admin Elevation Requests
                 </h5>
@@ -1846,27 +2052,32 @@ const AdminDashboard = () => {
               {requests.length > 0 ? (
                 <div className="list-group list-group-flush">
                   {requests.map((r) => (
-                    <div key={r._id} className="list-group-item px-0 py-3 d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                    <div key={r._id} className="list-group-item px-0 py-3 d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center gap-3">
                       <div>
                         <div className="d-flex align-items-center gap-2 mb-1">
                           <h6 className="fw-bold text-dark mb-0">{r.email}</h6>
                           <span className="badge bg-info text-dark text-uppercase">Requested: {r.requestedRole}</span>
                         </div>
-                        <p className="text-muted small mb-1"><strong>Reason:</strong> {r.reason || "No reason specified."}</p>
+                        <p className="text-muted small mb-1">
+                          <strong>Reason: </strong>
+                          <span className="hover-reveal-content text-secondary" title={r.reason || "No reason specified."}>
+                            {r.reason || "No reason specified."}
+                          </span>
+                        </p>
                         <small className="text-muted">Requested by: {r.requestedBy || "Self"} • {new Date(r.createdAt).toLocaleString()}</small>
                       </div>
 
-                      <div className="d-flex flex-wrap gap-2">
-                        <button className="btn btn-sm btn-outline-secondary" onClick={() => handleApproveRequest(r._id, "viewer")} disabled={admin?.role !== "master"}>
+                      <div className="d-flex flex-wrap gap-2 w-100 w-lg-auto">
+                        <button className="btn btn-sm btn-outline-secondary flex-grow-1 flex-sm-grow-0" onClick={() => handleApproveRequest(r._id, "viewer")} disabled={admin?.role !== "master"}>
                           Approve Viewer
                         </button>
-                        <button className="btn btn-sm btn-outline-primary" onClick={() => handleApproveRequest(r._id, "suggester")} disabled={admin?.role !== "master"}>
+                        <button className="btn btn-sm btn-outline-primary flex-grow-1 flex-sm-grow-0" onClick={() => handleApproveRequest(r._id, "suggester")} disabled={admin?.role !== "master"}>
                           Approve Suggester
                         </button>
-                        <button className="btn btn-sm btn-warning text-dark fw-bold" onClick={() => handleApproveRequest(r._id, "master")} disabled={admin?.role !== "master"}>
+                        <button className="btn btn-sm btn-warning text-dark fw-bold flex-grow-1 flex-sm-grow-0" onClick={() => handleApproveRequest(r._id, "master")} disabled={admin?.role !== "master"}>
                           Approve Master
                         </button>
-                        <button className="btn btn-sm btn-outline-danger" onClick={() => handleRejectRequest(r._id)} disabled={admin?.role !== "master"}>
+                        <button className="btn btn-sm btn-outline-danger flex-grow-1 flex-sm-grow-0" onClick={() => handleRejectRequest(r._id)} disabled={admin?.role !== "master"}>
                           Reject
                         </button>
                       </div>
@@ -1885,30 +2096,89 @@ const AdminDashboard = () => {
           {/* Quick Action Modal: Comment */}
           {modalType === "comment" && activeEntity && (
             <div className="modal show d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }} tabIndex="-1">
-              <div className="modal-dialog modal-dialog-centered">
+              <div className="modal-dialog modal-dialog-centered modal-lg m-3 m-sm-auto">
                 <div className="modal-content border-0 shadow-lg rounded-4">
                   <div className="modal-header border-bottom">
-                    <h6 className="modal-title fw-bold">Add Internal Note on {activeEntity.entityType}</h6>
+                    <h6 className="modal-title fw-bold">Internal Notes & Comments ({activeEntity.entityType})</h6>
                     <button type="button" className="btn-close" onClick={closeModal}></button>
                   </div>
-                  <form onSubmit={handleModalCommentSubmit}>
-                    <div className="modal-body">
-                      <p className="small text-muted mb-2">Target: <strong>{activeEntity.fullName || activeEntity._id}</strong></p>
-                      <textarea
-                        rows={4}
-                        className="form-control"
-                        placeholder="Write your note or internal feedback here..."
-                        value={modalComment}
-                        onChange={(e) => setModalComment(e.target.value)}
-                        required
-                        autoFocus
-                      />
+                  <div className="modal-body">
+                    <div className="d-flex flex-wrap justify-content-between align-items-center mb-3 p-2 rounded-3 bg-light border gap-2">
+                      <div>
+                        <span className="small text-muted">Target: </span>
+                        <strong className="text-dark">{activeEntity.fullName || activeEntity.category || "Service Request"}</strong>
+                      </div>
+                      <div className="d-flex align-items-center gap-1">
+                        <span
+                          className="badge bg-white text-secondary border font-monospace id-badge-copy"
+                          style={{ fontSize: "11px" }}
+                          onClick={() => handleCopyId(activeEntity._id)}
+                          title="Click to copy full ID"
+                        >
+                          {activeEntity._id} {copiedId === activeEntity._id ? <FaCheck className="text-success ms-1" /> : <FaCopy className="ms-1 opacity-50" />}
+                        </span>
+                      </div>
                     </div>
-                    <div className="modal-footer border-top">
-                      <button type="button" className="btn btn-sm btn-outline-secondary" onClick={closeModal}>Cancel</button>
-                      <button type="submit" className="btn btn-sm btn-primary">Save Comment</button>
+
+                    {/* Previous Comments Thread */}
+                    <div className="mb-3">
+                      <div className="d-flex justify-content-between align-items-center mb-2">
+                        <label className="form-label small fw-bold text-muted mb-0">
+                          Past Internal Comments ({activeEntityComments.length})
+                        </label>
+                        {loadingComments && <span className="small text-muted">Refreshing...</span>}
+                      </div>
+
+                      {loadingComments ? (
+                        <div className="text-center py-3 text-muted small">Loading past comments...</div>
+                      ) : activeEntityComments.length > 0 ? (
+                        <div className="border rounded-3 p-2 bg-light mb-3" style={{ maxHeight: "200px", overflowY: "auto" }}>
+                          {activeEntityComments.map((comm) => (
+                            <div key={comm._id} className="p-2 mb-2 bg-white rounded-2 shadow-sm border border-light">
+                              <div className="d-flex justify-content-between align-items-center mb-1">
+                                <span className="fw-semibold text-primary small">
+                                  {comm.adminId?.fullName || comm.adminId?.email || "Admin"}
+                                  {comm.adminId?.role && (
+                                    <span className="badge bg-light text-secondary ms-1 border" style={{ fontSize: "10px" }}>
+                                      {comm.adminId.role}
+                                    </span>
+                                  )}
+                                </span>
+                                <small className="text-muted" style={{ fontSize: "11px" }}>
+                                  {comm.createdAt ? new Date(comm.createdAt).toLocaleString() : ""}
+                                </small>
+                              </div>
+                              <p className="mb-0 small text-dark" style={{ whiteSpace: "pre-wrap" }}>{comm.comment}</p>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="border rounded-3 p-3 bg-light text-center text-muted small mb-3">
+                          No previous notes recorded for this entity yet. Add the first internal note below.
+                        </div>
+                      )}
                     </div>
-                  </form>
+
+                    {/* New Comment Input */}
+                    <form onSubmit={handleModalCommentSubmit}>
+                      <div className="mb-3">
+                        <label className="form-label small fw-bold text-muted">Add New Internal Note</label>
+                        <textarea
+                          rows={3}
+                          className="form-control"
+                          placeholder="Write your note, update, or internal feedback here..."
+                          value={modalComment}
+                          onChange={(e) => setModalComment(e.target.value)}
+                          required
+                          autoFocus
+                        />
+                      </div>
+                      <div className="modal-footer border-top px-0 pb-0 pt-3">
+                        <button type="button" className="btn btn-sm btn-outline-secondary" onClick={closeModal}>Close</button>
+                        <button type="submit" className="btn btn-sm btn-primary">Save Note</button>
+                      </div>
+                    </form>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1917,7 +2187,7 @@ const AdminDashboard = () => {
           {/* Quick Action Modal: Edit */}
           {modalType === "edit" && activeEntity && (
             <div className="modal show d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }} tabIndex="-1">
-              <div className="modal-dialog modal-dialog-centered">
+              <div className="modal-dialog modal-dialog-centered m-3 m-sm-auto">
                 <div className="modal-content border-0 shadow-lg rounded-4">
                   <div className="modal-header border-bottom">
                     <h6 className="modal-title fw-bold">Edit {activeEntity.entityType} Details</h6>

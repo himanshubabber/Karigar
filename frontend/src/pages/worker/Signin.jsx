@@ -122,14 +122,11 @@ const Signin_worker = () => {
     }
   };
   
-  return ( 
-    <div className="d-flex justify-content-center align-items-center vh-100 bg-light">
-     
-      <div className="card shadow" style={{ width: "28rem" }}>
-        <div className="card-body">
-          <h3 className="text-center mb-4"
-          >Worker Login</h3>
-
+  return (
+    <div className="d-flex justify-content-center align-items-center min-vh-100 bg-light py-4 py-md-0">
+      <div className="card shadow" style={{ width: "28rem", maxWidth: "94vw" }}>
+        <div className="card-body p-4">
+          <h3 className="text-center mb-4">Worker Login</h3>
 
           <form onSubmit={handleSubmit}>
             <div className="mb-3">
@@ -179,8 +176,7 @@ const Signin_worker = () => {
               Sign In
             </button>
 
-            <p></p>
-            <p style={{textAlign:"center"}}>Or</p>
+            <p className="text-center mt-3 mb-2">Or</p>
 
             <div
   style={{
