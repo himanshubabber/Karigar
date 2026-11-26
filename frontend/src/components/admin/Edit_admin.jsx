@@ -216,11 +216,11 @@ const Edit_admin = () => {
     >
       <div className="container" style={{ maxWidth: "720px" }}>
         <div
-          className="card shadow-lg p-4 p-md-5 bg-white border-0"
+          className="card shadow-lg p-3 p-sm-4 p-md-5 bg-white border-0"
           style={{ width: "100%", borderRadius: "18px" }}
         >
         {/* Header / Back Link */}
-        <div className="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+        <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4 pb-2 border-bottom">
           <button
             type="button"
             className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2 rounded-pill px-3"
@@ -435,7 +435,7 @@ const Edit_admin = () => {
             </div>
           </div>
 
-          <div className="d-flex justify-content-between align-items-center mt-4 pt-2 border-top">
+          <div className="d-flex flex-column-reverse flex-sm-row justify-content-between align-items-stretch align-items-sm-center gap-2 mt-4 pt-2 border-top">
             <button
               type="button"
               className="btn btn-outline-secondary"
@@ -445,7 +445,7 @@ const Edit_admin = () => {
             </button>
             <button
               type="submit"
-              className="btn btn-primary d-flex align-items-center gap-2 px-4 shadow-sm"
+              className="btn btn-primary d-flex align-items-center justify-content-center gap-2 px-4 shadow-sm"
               disabled={changingPassword || !passwordForm.oldPassword || !passwordForm.newPassword}
             >
               <FaLock />

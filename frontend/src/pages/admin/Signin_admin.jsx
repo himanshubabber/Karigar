@@ -108,7 +108,7 @@ const Signin_admin = () => {
   return (
     <div className="min-vh-100 d-flex align-items-center justify-content-center p-3" style={{ background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)" }}>
       <div className="card shadow-lg rounded-4 border-0" style={{ width: "100%", maxWidth: "440px" }}>
-        <div className="card-body p-4 p-md-5">
+        <div className="card-body p-3 p-sm-4 p-md-5">
           <div className="text-center mb-4">
             <div className="d-inline-flex p-3 rounded-4 bg-primary bg-opacity-10 text-primary fs-3 mb-3">
               ⚡
@@ -142,13 +142,13 @@ const Signin_admin = () => {
           </div>
 
           {authMode === "google" ? (
-            <div className="d-flex justify-content-center py-2">
+            <div className="d-flex justify-content-center py-2 overflow-hidden w-100">
               <GoogleLogin
                 onSuccess={handleGoogleLogin}
                 onError={() => setErrorMsg("Google authentication failed. Please try again.")}
                 theme="filled_blue"
                 size="large"
-                width={340}
+                width="100%"
               />
             </div>
           ) : (
@@ -213,7 +213,7 @@ const Signin_admin = () => {
           style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
           tabIndex="-1"
         >
-          <div className="modal-dialog modal-dialog-centered">
+          <div className="modal-dialog modal-dialog-centered m-3 m-sm-auto">
             <div className="modal-content border-0 shadow-lg rounded-4 p-2">
               <div className="modal-header border-0 pb-0">
                 <h5 className="modal-title fw-bold">Reset Admin Password</h5>
