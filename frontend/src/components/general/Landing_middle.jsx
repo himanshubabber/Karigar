@@ -290,6 +290,7 @@ const Landing_middle = () => {
             .mobile-card-title { font-size: 0.95rem !important; }
             .mobile-card-text { font-size: 0.75rem !important; }
             /* 6. Adjust button padding and icon size */
+            .professional-btn { width: 100% !important; max-width: 340px; margin: 0 auto; }
             .btn-lg { padding: 0.75rem 1rem; }
             .btn-lg svg { width: 20px; height: 20px; margin-right: 0.5rem !important; }
         }

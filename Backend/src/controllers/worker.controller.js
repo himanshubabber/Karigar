@@ -515,10 +515,12 @@ const updateWorkerLocation = asyncHandler(async (req, res) => {
     }
   
     const otpRecord = await Otp.findOne({ serviceRequestId });
-    console.log(otpRecord.otp)
+
     if (!otpRecord) {
       return res.status(404).json({ message: "OTP not found" });
     }
+
+    console.log(otpRecord.otp);
   
     if (otpRecord.expiresAt < new Date()) {
       return res.status(400).json({ message: "OTP expired" });

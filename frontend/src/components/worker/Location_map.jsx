@@ -150,10 +150,42 @@ const Location_map = () => {
   const [quoteAmount, setQuoteAmount] = useState(0);
   const [quoteMessage, setQuoteMessage] = useState(null);
   const [isLocated,setisLocated]= useState(false);
-  //const { selectedReq: ser, updateSelectedReq } = useServiceReq();
   const { token } = useWorker();
 
+  const urlParams = new URLSearchParams(window.location.search);
+  const queryServiceId = urlParams.get("serviceRequestId");
+  const serviceRequestId = queryServiceId || order?._id || localStorage.getItem("serviceRequestId");
+
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (queryServiceId) {
+      try {
+        localStorage.setItem("serviceRequestId", queryServiceId);
+      } catch (e) {
+        console.error("Storage error:", e);
+      }
+    }
+  }, [queryServiceId]);
+
+  useEffect(() => {
+    if (serviceRequestId && (!order || order._id !== serviceRequestId)) {
+      api
+        .post("/api/v1/serviceRequest/get-service-details", { serviceRequestId })
+        .then((response) => {
+          const resData = response.data?.data;
+          const { serviceRequest: fetchedServiceReq } = resData || {};
+          if (fetchedServiceReq) {
+            updateSelectedReq(fetchedServiceReq);
+            localStorage.setItem("serviceRequestId", fetchedServiceReq._id);
+            localStorage.setItem("selectedReq", JSON.stringify(fetchedServiceReq));
+          }
+        })
+        .catch((err) => {
+          console.error("Error fetching service details for worker:", err);
+        });
+    }
+  }, [serviceRequestId, order?._id]);
 
   useEffect(() => {
     let watchId;
@@ -176,8 +208,6 @@ const Location_map = () => {
     };
   }, [track]);
 
-
-
   const startTracking = () => {
     setisLocated(true);
     setTrack(true);
@@ -186,14 +216,44 @@ const Location_map = () => {
   const distanceInfo = userPosition && destination
     ? getBearingAndDistance(userPosition, destination)
     : null;
-     {console.log("user pos",userPosition)}
-     {console.log("dest pos",destination)}
-  if (!order || !destination) return <p className="text-center mt-5">No service request selected.</p>;
+
+  if (!order) {
+    return (
+      <div className="container py-5 px-3 text-center" style={{ maxWidth: "540px" }}>
+        <div className="card shadow-sm border-0 p-4 rounded-4 bg-white">
+          <div className="spinner-border text-primary mx-auto mb-3" role="status" style={{ width: "3rem", height: "3rem" }}>
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <h5 className="fw-bold mb-1 text-dark">Loading Service Request...</h5>
+          <p className="text-muted small mb-4">
+            {serviceRequestId
+              ? "Fetching real-time service request details..."
+              : "No active service request selected."}
+          </p>
+          <div className="d-flex justify-content-center gap-2 flex-wrap">
+            <button
+              onClick={() => navigate("/all_requests")}
+              className="btn btn-warning rounded-pill px-4 fw-semibold"
+            >
+              Browse All Requests
+            </button>
+            <button
+              onClick={() => navigate("/worker")}
+              className="btn btn-outline-secondary rounded-pill px-4"
+            >
+              Dashboard
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const customer = order.customerId || {};
 
   const handleSubmitOtp = async () => {
     if (!otp) return alert("Please enter OTP");
+    if (otp.trim().length !== 6) return alert("Please enter a valid 6-digit OTP");
   
     try {
       const res = await api.post(
@@ -272,32 +332,6 @@ const Location_map = () => {
       setQuoteMessage("❌ " + (err.response?.data?.message || "Failed to submit quote"));
     }
   };
-  
-  const serviceRequestId = order?._id || localStorage.getItem("serviceRequestId");
-  useEffect(() => {
-    if (serviceRequestId) {
-      api
-        .post("/api/v1/serviceRequest/get-service-details", { serviceRequestId })
-        .then((response) => {
-          const resData = response.data?.data;
-          const {
-            customer: fetchedCustomer,
-            worker: fetchedWorker,
-            serviceRequest: fetchedServiceReq,
-          } = resData || {};
-
-          updateSelectedReq(fetchedServiceReq || null);
-
-          if (fetchedServiceReq?._id) {
-            localStorage.setItem("serviceRequestId", fetchedServiceReq._id);
-            localStorage.setItem("selectedReq", JSON.stringify(fetchedServiceReq));
-          }
-        })
-        .catch((err) => {
-          console.error("Error fetching service details:", err);
-        });
-    }
-  }, [serviceRequestId]);
 
   useEffect(() => {
     setTrack(true);
@@ -458,7 +492,7 @@ const Location_map = () => {
                       type="text"
                       value={otp}
                       onChange={(e) => setOtp(e.target.value)}
-                      placeholder="Enter 4-digit OTP"
+                      placeholder="Enter 6-digit OTP"
                       className="form-control"
                       maxLength={6}
                     />

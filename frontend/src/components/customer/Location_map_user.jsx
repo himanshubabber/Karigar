@@ -100,7 +100,6 @@ const Location_map_user = () => {
   const { otpData: otp } = useOtp();
   const { selectedReq: ser, updateSelectedReq } = useServiceReq();
 
-  const [otpShow, setOtpShow] = useState(false);
   const [userPosition, setUserPosition] = useState(null);
   const [showCancelOptions, setShowCancelOptions] = useState(false);
   const [track, setTrack] = useState(false);
@@ -110,9 +109,20 @@ const Location_map_user = () => {
   const [verifyDone, setVerifyDone] = useState(false);
   const [textSubmitted,setTextSubmitted]=useState(false);
 
-
-  const serviceRequestId = ser?._id || localStorage.getItem("serviceRequestId");
+  const urlParams = new URLSearchParams(window.location.search);
+  const queryServiceId = urlParams.get("serviceRequestId");
+  const serviceRequestId = queryServiceId || ser?._id || localStorage.getItem("serviceRequestId");
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (queryServiceId) {
+      try {
+        localStorage.setItem("serviceRequestId", queryServiceId);
+      } catch (e) {
+        console.error("Storage error:", e);
+      }
+    }
+  }, [queryServiceId]);
 
   useEffect(() => {
     if (serviceRequestId) {
@@ -193,7 +203,6 @@ const Location_map_user = () => {
   
       );
 
-      setOtpShow(true)
       const options = {
         key: "rzp_test_4RSGtzPekc2oSp", // <- ✅ Use VITE_ prefixed env var
         order_id: data.data.id,
@@ -314,7 +323,6 @@ const Location_map_user = () => {
         }
       );
       console.log("✅ Payment status updated:", response.data);
-      setOtpShow(true)
       // Optionally show success message or update UI
     } catch (error) {
       console.error("❌ Failed to update payment status:", error?.response?.data?.message || error.message);
@@ -448,6 +456,32 @@ useEffect(() => {
     }
   };
 
+
+  if (!ser) {
+    return (
+      <div className="container py-5 px-3 text-center" style={{ maxWidth: "540px" }}>
+        <div className="card shadow-sm border-0 p-4 rounded-4 bg-white">
+          <div className="spinner-border text-primary mx-auto mb-3" role="status" style={{ width: "3rem", height: "3rem" }}>
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <h5 className="fw-bold mb-1 text-dark">Loading Service Request...</h5>
+          <p className="text-muted small mb-4">
+            {serviceRequestId
+              ? "Fetching your real-time service details..."
+              : "No active service request found."}
+          </p>
+          <div>
+            <button
+              onClick={() => navigate("/customer")}
+              className="btn btn-outline-primary rounded-pill px-4"
+            >
+              Back to Dashboard
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container py-3 px-2 px-md-3" style={{ maxWidth: "1200px" }}>
@@ -661,7 +695,6 @@ useEffect(() => {
                   <button className="btn btn-primary fw-bold w-100 py-2 rounded-pill shadow-sm" onClick={handlePayment}>
                     Pay to Start Work
                   </button>
-                  {otpShow && <div className="text-success small fw-semibold mt-2">✓ OTP Sent to Registered Mobile No.</div>}
                 </div>
               )}
             </div>

@@ -356,7 +356,7 @@ const generateOtpobj = asyncHandler(async (req, res) => {
     { serviceRequestId },
     {
       otp,
-      expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+      expiresAt: new Date(Date.now() + 3 * 60 * 60 * 1000), // 3 hours
       verified: false,
     },
     { new: true, upsert: true }

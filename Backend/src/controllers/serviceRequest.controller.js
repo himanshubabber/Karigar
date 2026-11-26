@@ -134,8 +134,9 @@ const acceptRequest = asyncHandler(async (req, res) => {
     recipientRole: "customer",
     recipientId: serviceRequest.customerId,
     title: "Worker Connected",
-    message: `A skilled worker accepted your ${serviceRequest.category || "service"} request #${serviceRequestId.toString().slice(-6)}.`,
+    message: `A skilled worker accepted your ${serviceRequest.category || "service"} request #${serviceRequestId.toString()}.`,
     type: "order",
+    link: `/location_user?serviceRequestId=${serviceRequestId.toString()}`,
   });
 
   // Populate customer and worker data for full frontend use
@@ -183,8 +184,9 @@ const setQuoteAmount = asyncHandler(async (req, res) => {
     recipientRole: "customer",
     recipientId: serviceRequest.customerId,
     title: "Repair Quote Submitted",
-    message: `Worker submitted a repair quote of ₹${quoteAmount} for request #${serviceRequestId.toString().slice(-6)}.`,
+    message: `Worker submitted a repair quote of ₹${quoteAmount} for request #${serviceRequestId.toString()}.`,
     type: "quote",
+    link: `/location_user?serviceRequestId=${serviceRequestId.toString()}`,
   });
 
   const updatedServiceRequest = await ServiceRequest.findById(
@@ -227,8 +229,9 @@ const acceptRepairQuote= asyncHandler(async (req, res) => {
       recipientRole: "worker",
       recipientId: serviceRequest.workerId,
       title: "Repair Quote Accepted",
-      message: `Customer approved repair quote of ₹${serviceRequest.quoteAmount} for request #${serviceRequestId.toString().slice(-6)}.`,
+      message: `Customer approved repair quote of ₹${serviceRequest.quoteAmount} for request #${serviceRequestId.toString()}.`,
       type: "quote",
+      link: `/location_worker?serviceRequestId=${serviceRequestId.toString()}`,
     });
   }
 
@@ -261,8 +264,9 @@ const rejectRepairQuote = asyncHandler(async (req, res) => {
       recipientRole: "worker",
       recipientId: serviceRequest.workerId,
       title: "Repair Quote Rejected",
-      message: `Customer rejected the repair quote for request #${serviceRequestId.toString().slice(-6)}.`,
+      message: `Customer rejected the repair quote for request #${serviceRequestId.toString()}.`,
       type: "quote",
+      link: `/location_worker?serviceRequestId=${serviceRequestId.toString()}`,
     });
   }
 
@@ -771,8 +775,9 @@ const markPaymentDone = asyncHandler(async (req, res) => {
       recipientRole: "customer",
       recipientId: serviceRequest.customerId,
       title: "Payment Completed",
-      message: `Payment for service request #${serviceRequestId.toString().slice(-6)} has been completed.`,
+      message: `Payment for service request #${serviceRequestId.toString()} has been completed.`,
       type: "order",
+      link: `/location_user?serviceRequestId=${serviceRequestId.toString()}`,
     });
   }
   if (serviceRequest.workerId) {
@@ -780,8 +785,9 @@ const markPaymentDone = asyncHandler(async (req, res) => {
       recipientRole: "worker",
       recipientId: serviceRequest.workerId,
       title: "Payment Received",
-      message: `Customer completed payment for service request #${serviceRequestId.toString().slice(-6)}.`,
+      message: `Customer completed payment for service request #${serviceRequestId.toString()}.`,
       type: "order",
+      link: `/location_worker?serviceRequestId=${serviceRequestId.toString()}`,
     });
   }
 
@@ -840,8 +846,9 @@ const updateJobStatus = asyncHandler(async (req, res) => {
       recipientRole: "customer",
       recipientId: serviceRequest.customerId,
       title: "Order Status Update",
-      message: `Your service request #${serviceRequestId.toString().slice(-6)} status is now "${newStatus}".`,
+      message: `Your service request #${serviceRequestId.toString()} status is now "${newStatus}".`,
       type: "order",
+      link: `/location_user?serviceRequestId=${serviceRequestId.toString()}`,
     });
   }
   if (serviceRequest.workerId) {
@@ -849,8 +856,9 @@ const updateJobStatus = asyncHandler(async (req, res) => {
       recipientRole: "worker",
       recipientId: serviceRequest.workerId,
       title: "Job Status Update",
-      message: `Service request #${serviceRequestId.toString().slice(-6)} status is now "${newStatus}".`,
+      message: `Service request #${serviceRequestId.toString()} status is now "${newStatus}".`,
       type: "order",
+      link: `/location_worker?serviceRequestId=${serviceRequestId.toString()}`,
     });
   }
 

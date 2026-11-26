@@ -192,7 +192,7 @@ const Service_req_form = () => {
 
   return (
     <div
-      className="d-flex justify-content-center align-items-start align-items-sm-center min-vh-100 py-4"
+      className="d-flex justify-content-center align-items-start align-items-sm-center min-vh-100 py-4 px-2 px-sm-3"
       style={{
         backgroundImage: `url('/landing_page.png')`,
         backgroundSize: "cover",
@@ -200,7 +200,7 @@ const Service_req_form = () => {
         backgroundRepeat: "no-repeat"
       }}
     >
-      <div className="card shadow-lg p-3 p-sm-4" style={{ width: "36rem", maxWidth: "94vw", borderRadius: "15px", backgroundColor: "rgba(255, 255, 255, 0.95)" }}>
+      <div className="card shadow-lg p-3 p-sm-4 border-0" style={{ width: "100%", maxWidth: "560px", borderRadius: "18px", backgroundColor: "rgba(255, 255, 255, 0.96)" }}>
         <h3 className="text-center fw-bold mb-3 text-primary">Request a Service</h3>
         <form onSubmit={handleSubmit}>
           {/* Category */}
