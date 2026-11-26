@@ -41,7 +41,7 @@ const Header = () => {
   return (
     <>
       {/* Added 'navbar navbar-expand-lg' to enable the collapsing behavior */}
-      <header className="stylish-header sticky-top z-3 navbar navbar-expand-lg navbar-light bg-white py-2 py-lg-3">
+      <header className="stylish-header sticky-top navbar navbar-expand-lg navbar-light bg-white py-2 py-lg-3" style={{ zIndex: 1200 }}>
         <div className="container-fluid px-3 px-lg-4">
 
           {/* --- Logo --- */}

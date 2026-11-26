@@ -56,7 +56,7 @@ const Header_worker = ({ isOnline }) => {
   };
 
   return (
-    <header className="bg-white shadow-sm border-bottom sticky-top z-3 navbar navbar-expand-lg navbar-light py-2 px-2 px-lg-3">
+    <header className="bg-white shadow-sm border-bottom sticky-top navbar navbar-expand-lg navbar-light py-2 px-2 px-lg-3" style={{ zIndex: 1200 }}>
       <div className="container-fluid">
 
         {/* Logo */}

@@ -178,7 +178,10 @@ const Location_map = () => {
 
 
 
-  const startTracking = () => setTrack(true);
+  const startTracking = () => {
+    setisLocated(true);
+    setTrack(true);
+  };
   const mapCenter = userPosition || [28.6139, 77.209];
   const distanceInfo = userPosition && destination
     ? getBearingAndDistance(userPosition, destination)
@@ -340,199 +343,261 @@ const Location_map = () => {
 
 
   return (
-    <div className="container-fluid py-3 px-2 px-md-3" style={{ fontFamily: "Segoe UI, sans-serif" }}>
-      <div className="d-flex flex-column flex-lg-row gap-3 align-items-start">
-        {/* Left Panel */}
-        <div className="w-100 flex-lg-shrink-0" style={{ maxWidth: "380px", margin: "0 auto" }}>
-        {!isLocated && 
+    <div className="container py-3 px-2 px-md-3" style={{ maxWidth: "1200px" }}>
+      {/* Locate Button if not yet tracked */}
+      {!isLocated && (
         <button
           onClick={startTracking}
-          style={{
-            padding: "12px 20px",
-            fontWeight: "bold",
-            marginBottom: "18px",
-            borderRadius: "8px",
-            backgroundColor: "#007bff",
-            color: "#fff",
-            border: "none",
-            boxShadow: "0 3px 6px rgba(0,0,0,0.1)",
-            width: "100%",
-          }}
+          className="btn btn-primary fw-bold w-100 mb-3 py-3 rounded-pill shadow-sm d-flex align-items-center justify-content-center gap-2"
         >
-          Locate Customer
-          {setisLocated(true)}
-          {setTrack(true)}
+          <MdOutlineDirectionsRun size={20} /> Locate Customer & Start Tracking
         </button>
-}
+      )}
 
-        <div className="card" style={{ padding: "20px", 
-          maxWidth:"420px",
-          borderRadius: "12px", background: "#f8f9fa", boxShadow: "0 4px 10px rgba(0,0,0,0.08)" }}>
-          <h5 className="fw-bold mb-3" style={{ fontSize: "1.2rem" }}>
-            <GiMultiDirections size={26} className="me-2 text-black" />
-            Navigation Info
-          </h5>
-
-          {userPosition ? (
-            <>
-              {/* <p><strong><TiPin size={26} className="me-2 text-black" />Your Location:</strong> <span className="text-primary">{address}</span></p> */}
-              <p><strong><MdOutlineDirectionsRun size={26} className="me-2 text-black" />Distance to Customer:</strong> <span className="badge bg-info text-dark">{distanceInfo.distance} m</span></p>
-              {/* <p><strong><MdOutlineAccessTimeFilled size={26} className="me-2 text-black" />Estimated Time:</strong> <span className="badge bg-success text-white">{distanceInfo.time} mins</span></p>
-               */}
-              <a
-                href={`https://www.google.com/maps/dir/?api=1&origin=${userPosition[0]},${userPosition[1]}&destination=${destination[0]},${destination[1]}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: "inline-block",
-                  marginTop: "10px",
-                  padding: "10px 15px",
-                  backgroundColor: "#28a745",
-                  color: "white",
-                  borderRadius: "8px",
-                  textDecoration: "none",
-                  textAlign: "center",
-                }}
-              >
-                <FiMapPin size={26} className="me-2 text-black" />
-                Open in Google Maps
-              </a>
-
-              <p></p>
-              {/* <hr style={{ margin: "15px 0" }} />
-              <hr style={{ margin: "20px 0" }} /> */}
-
-       <div style={{ marginBottom: "25px" }}>
-        <label htmlFor="quoteAmount" className="form-label fw-bold">
-        💰 Set Your Quote (₹):
-       </label>
-
-       <input
-    type="number"
-    id="quoteAmount"
-   className="form-control"
-   placeholder={quoteAmount || "e.g., 500"}
-   value={order.quoteAmount}
-   onChange={(e) => setQuoteAmount(e.target.value)}
-   style={{ marginTop: "6px", marginBottom: "12px" }}
-   disabled={order.quoteAmount>0}
-/>
-
-  <button
-    className="btn btn-primary w-100 fw-semibold"
-    onClick={handleQuoteSubmit}
-    disabled={order.quoteAmount>0}
-      >
-     Submit Quote
-        </button>
-
-        {quoteMessage && (
-           <p
-           className={`fw-semibold mt-3 mb-0 text-center ${
-         quoteMessage.startsWith("✅") ? "text-success" : "text-danger"
-          }`}
-            >
-            {quoteMessage}
-             </p>
+      {/* Map Section */}
+      <div className="card border-0 shadow-sm overflow-hidden mb-3 mb-md-4" style={{ borderRadius: "16px" }}>
+        <div style={{ height: "420px", minHeight: "320px", width: "100%" }}>
+          <MapContainer center={mapCenter} zoom={13} style={{ height: "100%", width: "100%" }}>
+            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+            {userPosition && destination && (
+              <>
+                <Marker position={destination} icon={manIcon}>
+                  <Popup>📍 Customer Location</Popup>
+                </Marker>
+                <Marker position={userPosition} icon={sourceIcon}>
+                  <Popup>👷‍♂️ Your Current Location</Popup>
+                </Marker>
+                <Routing from={userPosition} to={destination} />
+              </>
             )}
+          </MapContainer>
+        </div>
+      </div>
+
+      {/* Aligned 2-Column Responsive Grid */}
+      <div className="row g-3 g-md-4 align-items-stretch">
+        {/* Left Column: Navigation, Quotes & Actions */}
+        <div className="col-12 col-lg-6 d-flex">
+          <div
+            className="card border-0 shadow-sm p-3 p-md-4 w-100 d-flex flex-column"
+            style={{ borderRadius: "16px", backgroundColor: "#fff" }}
+          >
+            <div className="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom flex-wrap gap-2">
+              <h5 className="fw-bold text-dark mb-0 d-flex align-items-center">
+                <GiMultiDirections size={22} className="me-2 text-primary" />
+                Navigation & Actions
+              </h5>
+              <span className="badge bg-warning bg-opacity-10 text-dark fw-bold px-3 py-2 rounded-pill text-capitalize">
+                Status: {order?.orderStatus || "In Progress"}
+              </span>
             </div>
-            <p><strong><MdNetworkWifi size={20} /> Order Status:</strong> <span style={{ color: "#ffc107" }}>{order?.orderStatus}</span></p>
 
-            {setQuoteAmount && 
-            <div> 
-              {/* <Otp_timer  durationInSeconds={300} jobCompleted={order?.orderStatus === "completed"}   /> */}
-              
-              <input
-                type="text"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value)}
-                placeholder="Enter OTP"
-                style={{
-                  width: "100%",
-                  padding: "10px",
-                  marginBottom: "10px",
-                  borderRadius: "6px",
-                  border: "1px solid #ccc",
-                }}
-              />
-              <button className="btn btn-success" style={{ width: "100%", marginBottom: "10px" }}
-               onClick={handleSubmitOtp}
-              >
-                Submit OTP
-              </button>
+            {userPosition ? (
+              <div className="d-flex flex-column gap-3">
+                {/* Distance & Quick Map Actions */}
+                <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 p-2 px-3 rounded-3" style={{ backgroundColor: "#f8f9fa" }}>
+                  <div className="d-flex align-items-center">
+                    <MdOutlineDirectionsRun size={20} className="me-2 text-primary" />
+                    <span className="text-muted small fw-medium">Distance:</span>
+                    <span className="badge bg-primary text-white fw-bold ms-2 px-2 py-1">
+                      {distanceInfo?.distance ?? "..."} m
+                    </span>
+                  </div>
+                  <a
+                    href={`https://www.google.com/maps/dir/?api=1&origin=${userPosition[0]},${userPosition[1]}&destination=${destination[0]},${destination[1]}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-outline-success btn-sm rounded-pill fw-semibold d-inline-flex align-items-center gap-1"
+                  >
+                    <FiMapPin size={14} /> Open in Google Maps
+                  </a>
+                </div>
+
+                {/* Quote Setting Block */}
+                <div className="p-3 rounded-3" style={{ backgroundColor: "#f8f9fa" }}>
+                  <label htmlFor="quoteAmount" className="form-label fw-bold small text-dark d-block mb-1">
+                    💰 Set Repair Quote Amount (₹):
+                  </label>
+                  <div className="input-group mb-2">
+                    <span className="input-group-text bg-white border-end-0">₹</span>
+                    <input
+                      type="number"
+                      id="quoteAmount"
+                      className="form-control"
+                      placeholder={order?.quoteAmount > 0 ? String(order.quoteAmount) : "e.g., 500"}
+                      value={quoteAmount || (order?.quoteAmount > 0 ? order.quoteAmount : "")}
+                      onChange={(e) => setQuoteAmount(e.target.value)}
+                      disabled={order.quoteAmount > 0}
+                    />
+                    <button
+                      className="btn btn-primary fw-semibold px-3"
+                      onClick={handleQuoteSubmit}
+                      disabled={order.quoteAmount > 0}
+                    >
+                      {order.quoteAmount > 0 ? "Quoted" : "Submit Quote"}
+                    </button>
+                  </div>
+                  {quoteMessage && (
+                    <p
+                      className={`small fw-semibold mb-0 ${
+                        quoteMessage.startsWith("✅") ? "text-success" : "text-danger"
+                      }`}
+                    >
+                      {quoteMessage}
+                    </p>
+                  )}
+                </div>
+
+                {/* OTP Completion Block */}
+                <div className="p-3 rounded-3" style={{ backgroundColor: "#f8f9fa" }}>
+                  <label className="form-label fw-bold small text-dark d-block mb-1">
+                    🔐 Verify Customer OTP to Complete Job:
+                  </label>
+                  <div className="d-flex gap-2">
+                    <input
+                      type="text"
+                      value={otp}
+                      onChange={(e) => setOtp(e.target.value)}
+                      placeholder="Enter 4-digit OTP"
+                      className="form-control"
+                      maxLength={6}
+                    />
+                    <button
+                      className="btn btn-success fw-bold px-4 rounded-3 flex-shrink-0"
+                      onClick={handleSubmitOtp}
+                    >
+                      Verify OTP
+                    </button>
+                  </div>
+                </div>
+
+                {/* Cancellation Options */}
+                <div className="pt-2 mt-auto border-top">
+                  {!showCancelOptions ? (
+                    <button
+                      className="btn btn-outline-danger btn-sm rounded-pill w-100 fw-semibold py-2"
+                      onClick={() => setShowCancelOptions(true)}
+                    >
+                      Cancel Request
+                    </button>
+                  ) : (
+                    <div className="d-flex flex-column gap-2">
+                      <button
+                        className="btn btn-warning btn-sm rounded-pill fw-semibold text-dark"
+                        onClick={HandleDontWantToProceed}
+                      >
+                        Don't want to proceed
+                      </button>
+                      <button
+                        className="btn btn-outline-secondary btn-sm rounded-pill fw-semibold"
+                        onClick={HandleCustomerNotResponding}
+                      >
+                        Customer not responding
+                      </button>
+                      <button
+                        className="btn btn-light btn-sm text-muted"
+                        onClick={() => setShowCancelOptions(false)}
+                      >
+                        Keep Request
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
-}
+            ) : (
+              <div className="text-center py-4 my-auto">
+                <p className="text-muted small mb-0">Waiting for location permission to display route info...</p>
+              </div>
+            )}
+          </div>
+        </div>
 
-              {!showCancelOptions ? (
-                <button className="btn btn-danger" style={{ width: "100%" }} onClick={() => setShowCancelOptions(true)}>
-                  Cancel
-                </button>
-              ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                  <button className="btn btn-warning" onClick={HandleDontWantToProceed}>
-                    Don't want to proceed
-                  </button>
-                  <button className="btn btn-secondary" onClick={HandleCustomerNotResponding}>
-                    Customer not responding
-                  </button>
+        {/* Right Column: Customer & Request Details */}
+        <div className="col-12 col-lg-6 d-flex">
+          <div
+            className="card border-0 shadow-sm p-3 p-md-4 w-100 d-flex flex-column"
+            style={{ borderRadius: "16px", backgroundColor: "#fff" }}
+          >
+            <h5 className="fw-bold mb-3 pb-2 border-bottom d-flex align-items-center text-dark">
+              <IoIosInformationCircle size={22} className="me-2 text-primary" />
+              Customer & Request Details
+            </h5>
+
+            <div className="d-flex flex-column gap-2 mb-3">
+              <div className="d-flex justify-content-between align-items-center p-2 px-3 rounded-3" style={{ backgroundColor: "#f8f9fa" }}>
+                <span className="text-muted small fw-medium d-flex align-items-center">
+                  <CgProfile size={18} className="me-2 text-primary" /> Customer
+                </span>
+                <span className="fw-bold text-dark small">{customer.fullName || "Customer"}</span>
+              </div>
+
+              {customer.email && (
+                <div className="d-flex justify-content-between align-items-center p-2 px-3 rounded-3" style={{ backgroundColor: "#f8f9fa" }}>
+                  <span className="text-muted small fw-medium">Email</span>
+                  <span className="text-dark small text-break">{customer.email}</span>
                 </div>
               )}
-            </>
-          ) : (
-            <p className="text-muted">Waiting for your location...</p>
-          )}
-        </div>
-      </div>
 
-      {/* Map */}
-      <div className="flex-grow-1 w-100" style={{ minHeight: "360px", height: "520px", borderRadius: "12px", boxShadow: "0 3px 10px rgba(0,0,0,0.1)", overflow: "hidden" }}>
-        <MapContainer center={mapCenter} zoom={13} style={{ height: "100%", width: "100%" }}>
-          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-          {userPosition && destination && (
-            <>
-              <Marker position={destination} icon={manIcon}>
-                <Popup>📍 Customer Location</Popup>
-              </Marker>
-              <Marker position={userPosition} icon={sourceIcon}>
-                <Popup>👷‍♂️ Your Current Location</Popup>
-              </Marker>
-              <Routing from={userPosition} to={destination} />
-            </>
-          )}
-        </MapContainer>
-      </div>
-      {console.log("order is:",order)}
-      {/* Right Info Card */}
-      <div className="card w-100 flex-lg-shrink-0" style={{ maxWidth: "350px", margin: "0 auto", padding: "20px", borderRadius: "12px", background: "#fefefe", boxShadow: "0 4px 10px rgba(0,0,0,0.1)", height: "fit-content" }}>
-        <h5 className="fw-bold mb-3" style={{ fontSize: "1.2rem", color: "#343a40", borderBottom: "1px solid #ccc", paddingBottom: "10px", marginBottom: "20px" }}>
-          <IoIosInformationCircle size={26} className="me-2 text-black" />
-          Customer Request Info
-        </h5>
-        <div style={{ lineHeight: "1.8", fontSize: "15px", color: "#212529" }}>
-          <p></p>
-          <p><strong><CgProfile size={20} /> Name:</strong> {customer.fullName || "N/A"}</p>
-          <p><strong>📧 Email:</strong> {customer.email || "N/A"}</p>
-          <p><strong>📞 Phone:</strong> {customer.phone || "N/A"}</p>
-          {/* <p><strong>🏠 Address:</strong> {customer.address || "N/A"}</p> */}
-          <p><strong><FaHammer size={20} /> Category:</strong> {order.category}</p>
-          <p><strong><MdOutlineDescription size={20} /> Description:</strong> {order.description}</p>
-          <p><strong><MdNetworkWifi size={20} /> Job Status:</strong> <span style={{ color: "#ffc107" }}>{order.jobStatus}</span></p>
-          {order?.paymentStatus==='paid' &&
-          <p><strong><RiMoneyDollarCircleFill size={20} /> Payment:</strong> <span 
-           style={{ color: "green" }}
-          >{order.paymentStatus}</span></p>
-          }
-          { order?.paymentStatus!=="paid" &&
-          <p><strong><RiMoneyDollarCircleFill size={20} /> Payment:</strong> <span 
-           style={{ color: "#dc3545" }}
-          >{order.paymentStatus}</span></p>
-        }
-          {/* <p><strong><MdOutlineAccessTimeFilled size={20} /> Created:</strong> {new Date(order.createdAt).toLocaleString()}</p> */}
-          <p><strong><AiTwotoneAudio size={20} /> Audio Note:</strong></p>
-          <audio controls src={order.audioNoteUrl} style={{ width: "100%", marginTop: "6px" }} />
+              {customer.phone && (
+                <div className="d-flex justify-content-between align-items-center p-2 px-3 rounded-3" style={{ backgroundColor: "#f8f9fa" }}>
+                  <span className="text-muted small fw-medium">Phone</span>
+                  <span className="text-dark small">{customer.phone}</span>
+                </div>
+              )}
+
+              <div className="d-flex justify-content-between align-items-center p-2 px-3 rounded-3" style={{ backgroundColor: "#f8f9fa" }}>
+                <span className="text-muted small fw-medium d-flex align-items-center">
+                  <FaHammer size={16} className="me-2 text-primary" /> Category
+                </span>
+                <span className="badge bg-primary bg-opacity-10 text-primary fw-bold text-capitalize">
+                  {order.category}
+                </span>
+              </div>
+
+              <div className="d-flex justify-content-between align-items-center p-2 px-3 rounded-3" style={{ backgroundColor: "#f8f9fa" }}>
+                <span className="text-muted small fw-medium d-flex align-items-center">
+                  <MdNetworkWifi size={18} className="me-2 text-primary" /> Job Status
+                </span>
+                <span className="badge bg-warning bg-opacity-10 text-dark fw-bold text-capitalize">
+                  {order.jobStatus}
+                </span>
+              </div>
+
+              <div className="d-flex justify-content-between align-items-center p-2 px-3 rounded-3" style={{ backgroundColor: "#f8f9fa" }}>
+                <span className="text-muted small fw-medium d-flex align-items-center">
+                  <RiMoneyDollarCircleFill size={18} className="me-2 text-primary" /> Payment
+                </span>
+                <span className={`badge ${order?.paymentStatus === 'paid' ? 'bg-success' : 'bg-danger'} fw-bold text-capitalize`}>
+                  {order.paymentStatus || "Unpaid"}
+                </span>
+              </div>
+            </div>
+
+            <div
+              className="p-3 rounded-3 mb-3 flex-grow-1"
+              style={{ backgroundColor: "#f8f9fa", borderLeft: "4px solid #0d6efd" }}
+            >
+              <span className="text-muted small fw-semibold d-block mb-1">
+                <MdOutlineDescription className="me-1 text-primary" /> Issue Description
+              </span>
+              <p className="mb-0 text-dark small" style={{ whiteSpace: "pre-wrap" }}>
+                {order.description || "No description provided"}
+              </p>
+            </div>
+
+            {order.audioNoteUrl ? (
+              <div className="mt-auto pt-2 border-top">
+                <span className="text-muted small fw-semibold d-block mb-1">
+                  <AiTwotoneAudio className="me-1 text-primary" /> Customer Voice Note
+                </span>
+                <audio controls src={order.audioNoteUrl} className="w-100 rounded-3" />
+              </div>
+            ) : (
+              <p className="text-muted small mb-0 mt-auto pt-2 border-top">No audio note provided.</p>
+            )}
+          </div>
         </div>
       </div>
-    </div>
     </div>
   );
 };

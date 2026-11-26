@@ -50,7 +50,7 @@ const Requests = () => {
           <p className="text-muted small mb-0">New customer requests will show up here as soon as they are submitted.</p>
         </div>
       ) : (
-        <div className="row g-4 justify-content-center w-100" style={{ maxWidth: "1050px" }}>
+        <div className="row g-3 g-md-4 justify-content-center w-100" style={{ maxWidth: "1050px" }}>
           {serviceReqs.map((req) => (
             <div className="col-12 col-md-6 d-flex align-items-stretch" key={req._id}>
               <Request request={req} />

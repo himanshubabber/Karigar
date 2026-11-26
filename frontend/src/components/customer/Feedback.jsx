@@ -35,8 +35,8 @@ const Feedback = ({ serviceRequestId, onSubmit }) => {
   };
 
   return (
-    <div className="d-flex flex-column align-items-center mt-5">
-      <h3 className="mb-4">Rate Your Experience</h3>
+    <div className="d-flex flex-column align-items-center my-2">
+      <h5 className="mb-3 fw-bold text-dark">Rate Your Experience</h5>
 
       <div className="d-flex mb-3">
         {[...Array(5)].map((_, index) => {

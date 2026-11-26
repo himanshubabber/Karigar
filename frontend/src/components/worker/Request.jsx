@@ -104,7 +104,7 @@ const Request = ({ request }) => {
 
   return (
     <div
-      className="card border-0 shadow-sm p-4 w-100 d-flex flex-column justify-content-between h-100"
+      className="card border-0 shadow-sm p-3 p-sm-4 w-100 d-flex flex-column justify-content-between h-100"
       style={{ borderRadius: "16px", backgroundColor: "#fff" }}
     >
       <div>

@@ -53,6 +53,8 @@ const NotificationBell = ({
       let recipientIdParam = "";
       try {
         const storedUser =
+          localStorage.getItem("karigar_customer") ||
+          localStorage.getItem("karigar_worker") ||
           localStorage.getItem("user") ||
           localStorage.getItem("customer") ||
           localStorage.getItem("worker") ||
@@ -154,7 +156,7 @@ const NotificationBell = ({
   };
 
   return (
-    <div className="position-relative d-inline-block" ref={dropdownRef}>
+    <div className="position-relative d-inline-block" ref={dropdownRef} style={{ zIndex: 1250 }}>
       {/* Bell Trigger Button */}
       <button
         type="button"
@@ -168,7 +170,7 @@ const NotificationBell = ({
           width: 38,
           height: 38,
           transition: "transform 0.15s ease",
-          zIndex: 1030,
+          zIndex: 1250,
         }}
         title="View Notifications"
         aria-label="Notifications"
@@ -191,7 +193,8 @@ const NotificationBell = ({
           className="position-absolute end-0 mt-2 bg-white rounded-4 shadow-lg border-0 overflow-hidden"
           style={{
             width: "min(90vw, 360px)",
-            zIndex: 1060,
+            maxHeight: "85vh",
+            zIndex: 9999,
             fontFamily: "Inter, sans-serif",
             animation: "fadeIn 0.2s ease-in-out",
           }}
