@@ -920,8 +920,24 @@ const updateJobStatus = asyncHandler(async (req, res) => {
   return res.status(200).json(new ApiResponse(200, serviceRequest, "Job status updated successfully"));
 });
 
+const uploadAudioNote = asyncHandler(async (req, res) => {
+  if (!req.file) {
+    throw new ApiError(400, "Audio file is required");
+  }
 
+  const result = await uploadOnCloudinary(req.file.path);
+  if (!result || !result.secure_url) {
+    throw new ApiError(500, "Failed to upload audio to Cloudinary");
+  }
 
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      { audioUrl: result.secure_url },
+      "Audio uploaded successfully"
+    )
+  );
+});
 
 export {
   createServiceRequest,
@@ -945,4 +961,5 @@ export {
   getCustomerHistory,
   getWorkerHistory,
   updateJobStatus,
+  uploadAudioNote,
 };

@@ -200,8 +200,7 @@ const Request = ({ request }) => {
             <span className="text-muted small fw-semibold d-block mb-1">
               <i className="bi bi-mic me-1 text-primary"></i> Voice Note
             </span>
-            <audio controls className="w-100 rounded-3">
-              <source src={audioNoteUrl} type="audio/mpeg" />
+            <audio controls src={audioNoteUrl} className="w-100 rounded-3">
               Your browser does not support the audio element.
             </audio>
           </div>
