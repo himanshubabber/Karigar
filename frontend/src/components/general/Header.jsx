@@ -251,8 +251,7 @@ const Header = () => {
 
         /* On larger screens, apply max-width */
         @media (min-width: 992px) {
-            .input-group-stylish[style*="lgMaxWidth: '320px'"] { max-width: 320px !important; }
-            .input-group-stylish[style*="lgMaxWidth: '220px'"] { max-width: 220px !important; }
+            .input-group-stylish { max-width: 340px !important; }
         }
 
 

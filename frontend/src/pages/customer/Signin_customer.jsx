@@ -124,10 +124,10 @@ const Signin_customer = () => {
   };
 
   return (
-    <div className="d-flex justify-content-center align-items-center min-vh-100 bg-light py-4 py-md-0">
-      <div className="card shadow" style={{ width: "28rem", maxWidth: "94vw" }}>
-        <div className="card-body p-4">
-          <h3 className="text-center mb-4">Customer Login</h3>
+    <div className="d-flex justify-content-center align-items-center min-vh-100 bg-light py-4 px-2 px-sm-3">
+      <div className="card shadow rounded-4 border-0" style={{ width: "100%", maxWidth: "420px" }}>
+        <div className="card-body p-3 p-sm-4">
+          <h3 className="text-center mb-4 fw-bold text-dark">Customer Login</h3>
           <form onSubmit={handleSubmit}>
             {["email", "password"].map((field, idx) => (
               <div className="mb-3" key={idx}>

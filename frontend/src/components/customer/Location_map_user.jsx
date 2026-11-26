@@ -109,9 +109,20 @@ const Location_map_user = () => {
   const [verifyDone, setVerifyDone] = useState(false);
   const [textSubmitted,setTextSubmitted]=useState(false);
 
-
-  const serviceRequestId = ser?._id || localStorage.getItem("serviceRequestId");
+  const urlParams = new URLSearchParams(window.location.search);
+  const queryServiceId = urlParams.get("serviceRequestId");
+  const serviceRequestId = queryServiceId || ser?._id || localStorage.getItem("serviceRequestId");
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (queryServiceId) {
+      try {
+        localStorage.setItem("serviceRequestId", queryServiceId);
+      } catch (e) {
+        console.error("Storage error:", e);
+      }
+    }
+  }, [queryServiceId]);
 
   useEffect(() => {
     if (serviceRequestId) {
@@ -445,6 +456,32 @@ useEffect(() => {
     }
   };
 
+
+  if (!ser) {
+    return (
+      <div className="container py-5 px-3 text-center" style={{ maxWidth: "540px" }}>
+        <div className="card shadow-sm border-0 p-4 rounded-4 bg-white">
+          <div className="spinner-border text-primary mx-auto mb-3" role="status" style={{ width: "3rem", height: "3rem" }}>
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <h5 className="fw-bold mb-1 text-dark">Loading Service Request...</h5>
+          <p className="text-muted small mb-4">
+            {serviceRequestId
+              ? "Fetching your real-time service details..."
+              : "No active service request found."}
+          </p>
+          <div>
+            <button
+              onClick={() => navigate("/customer")}
+              className="btn btn-outline-primary rounded-pill px-4"
+            >
+              Back to Dashboard
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container py-3 px-2 px-md-3" style={{ maxWidth: "1200px" }}>

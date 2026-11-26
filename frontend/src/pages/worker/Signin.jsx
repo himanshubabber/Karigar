@@ -123,10 +123,10 @@ const Signin_worker = () => {
   };
   
   return (
-    <div className="d-flex justify-content-center align-items-center min-vh-100 bg-light py-4 py-md-0">
-      <div className="card shadow" style={{ width: "28rem", maxWidth: "94vw" }}>
-        <div className="card-body p-4">
-          <h3 className="text-center mb-4">Worker Login</h3>
+    <div className="d-flex justify-content-center align-items-center min-vh-100 bg-light py-4 px-2 px-sm-3">
+      <div className="card shadow rounded-4 border-0" style={{ width: "100%", maxWidth: "420px" }}>
+        <div className="card-body p-3 p-sm-4">
+          <h3 className="text-center mb-4 fw-bold text-dark">Worker Login</h3>
 
           <form onSubmit={handleSubmit}>
             <div className="mb-3">
@@ -172,29 +172,29 @@ const Signin_worker = () => {
                 Sign up
               </span>
             </p>
-            <button type="submit" className="btn btn-primary w-100">
+            <button type="submit" className="btn btn-primary w-100 py-2 fw-semibold rounded-3">
               Sign In
             </button>
 
-            <p className="text-center mt-3 mb-2">Or</p>
+            <p className="text-center mt-3 mb-2 text-muted small">Or</p>
 
             <div
-  style={{
-    display: "flex",           // enable flex
-    justifyContent: "center",  // center horizontally
-    width: "28rem",            // match your card width
-    maxWidth: "100%",          // responsive on smaller screens
-    margin: "1rem auto",       // center container in page
-  }}
->
-    <GoogleLogin
-      onSuccess={handleGoogleLogin}
-      onError={() => console.log("Google login failed")}
-      theme="filled_blue"
-      size="large"
-      width={448} // max width allowed
-    ></GoogleLogin>
-    </div>
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                width: "100%",
+                maxWidth: "100%",
+                margin: "0.5rem auto",
+              }}
+            >
+              <GoogleLogin
+                onSuccess={handleGoogleLogin}
+                onError={() => console.log("Google login failed")}
+                theme="filled_blue"
+                size="large"
+                width={360}
+              />
+            </div>
           </form>
         </div>
       </div>
