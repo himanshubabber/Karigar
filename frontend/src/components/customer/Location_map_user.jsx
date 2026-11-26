@@ -31,6 +31,7 @@ import { useServiceReq } from "../../Context/Service_req_context.jsx";
 import { useCustomer } from "../../Context/Customer_context.jsx";
 import { useWorker } from "../../Context/Worker_context.jsx";
 import { useOtp } from "../../Context/Otp_context.jsx";
+import { useSocket } from "../../Context/SocketContext.jsx";
 import api from "../../api.js";
 
 const sourceIcon = L.icon({
@@ -108,6 +109,9 @@ const Location_map_user = () => {
   const [verifyError, setVerifyError] = useState(null);
   const [verifyDone, setVerifyDone] = useState(false);
   const [textSubmitted,setTextSubmitted]=useState(false);
+  const [liveWorkerCoords, setLiveWorkerCoords] = useState(null);
+
+  const { socket, joinRequestRoom, leaveRequestRoom } = useSocket();
 
   const urlParams = new URLSearchParams(window.location.search);
   const queryServiceId = urlParams.get("serviceRequestId");
@@ -123,6 +127,77 @@ const Location_map_user = () => {
       }
     }
   }, [queryServiceId]);
+
+  // Real-time WebSocket room subscription & event listeners
+  useEffect(() => {
+    if (!serviceRequestId) return;
+
+    joinRequestRoom(serviceRequestId);
+
+    if (!socket) return;
+
+    // 1. Worker GPS movement streaming
+    const handleLocationUpdate = (data) => {
+      if (data?.coordinates && Array.isArray(data.coordinates) && data.coordinates.length === 2) {
+        // data.coordinates is [lng, lat] -> Leaflet requires [lat, lng]
+        setLiveWorkerCoords([data.coordinates[1], data.coordinates[0]]);
+        if (data.orderStatus) {
+          updateSelectedReq((prev) => (prev ? { ...prev, orderStatus: data.orderStatus } : prev));
+        }
+      }
+    };
+
+    // 2. Worker connects to request
+    const handleWorkerConnected = (data) => {
+      if (data?.worker) setWorker(data.worker);
+      if (data?.serviceRequest) updateSelectedReq(data.serviceRequest);
+    };
+
+    // 3. Status changes (arrived, work started, completed)
+    const handleJobStatusUpdate = (data) => {
+      if (data?.jobStatus || data?.orderStatus) {
+        updateSelectedReq((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            jobStatus: data.jobStatus || prev.jobStatus,
+            orderStatus: data.orderStatus || prev.orderStatus,
+          };
+        });
+      }
+    };
+
+    // 4. Quote submitted, accepted or rejected
+    const handleQuoteUpdate = (data) => {
+      if (data?.serviceRequest) {
+        updateSelectedReq(data.serviceRequest);
+      } else if (data?.quoteAmount) {
+        updateSelectedReq((prev) =>
+          prev ? { ...prev, quoteAmount: data.quoteAmount, orderStatus: "repairAmountQuoted" } : prev
+        );
+      }
+    };
+
+    // 5. Payment completed
+    const handlePaymentCompleted = () => {
+      updateSelectedReq((prev) => (prev ? { ...prev, paymentStatus: "paid" } : prev));
+    };
+
+    socket.on("worker_location_update", handleLocationUpdate);
+    socket.on("worker_connected", handleWorkerConnected);
+    socket.on("job_status_update", handleJobStatusUpdate);
+    socket.on("quote_update", handleQuoteUpdate);
+    socket.on("payment_completed", handlePaymentCompleted);
+
+    return () => {
+      leaveRequestRoom(serviceRequestId);
+      socket.off("worker_location_update", handleLocationUpdate);
+      socket.off("worker_connected", handleWorkerConnected);
+      socket.off("job_status_update", handleJobStatusUpdate);
+      socket.off("quote_update", handleQuoteUpdate);
+      socket.off("payment_completed", handlePaymentCompleted);
+    };
+  }, [socket, serviceRequestId, joinRequestRoom, leaveRequestRoom]);
 
   useEffect(() => {
     if (serviceRequestId) {
@@ -249,7 +324,7 @@ const Location_map_user = () => {
     ? [ser.workerLocation.coordinates[1], ser.workerLocation.coordinates[0]]
     : null);
   console.log(worker)
-  const destination = workerCoords;
+  const destination = liveWorkerCoords || workerCoords;
 
   const distanceInfo = userPosition && destination
   ? getBearingAndDistance(userPosition, destination)

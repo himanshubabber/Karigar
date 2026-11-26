@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { useSocket } from "../../Context/SocketContext.jsx";
 import {
   FaBell,
   FaCheckDouble,
@@ -22,6 +23,7 @@ const NotificationBell = ({
   isDark = false,
 }) => {
   const navigate = useNavigate();
+  const { socket } = useSocket();
   const [isOpen, setIsOpen] = useState(false);
   const [filter, setFilter] = useState("all"); // 'all' | 'unread'
   const [dbNotifications, setDbNotifications] = useState([]);
@@ -91,6 +93,25 @@ const NotificationBell = ({
     const interval = setInterval(fetchNotifications, 60000);
     return () => clearInterval(interval);
   }, [role]);
+
+  // Real-time WebSocket notifications
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleNewNotification = (notif) => {
+      if (!notif) return;
+      setDbNotifications((prev) => {
+        if (prev.some((n) => n._id === notif._id)) return prev;
+        return [notif, ...prev];
+      });
+    };
+
+    socket.on("new_notification", handleNewNotification);
+
+    return () => {
+      socket.off("new_notification", handleNewNotification);
+    };
+  }, [socket]);
 
   // Close when clicking outside
   useEffect(() => {
