@@ -8,6 +8,7 @@ import { SEARCH_RADIUS_METERS } from "../constants.js";
 import { Cancellation } from "../models/cancellation.model.js";
 import { Customer } from "../models/customer.model.js";
 import geolib from "geolib";
+import { sendNotification } from "./notification.controller.js";
 
 
 const createServiceRequest = asyncHandler(async (req, res) => {
@@ -128,6 +129,15 @@ const acceptRequest = asyncHandler(async (req, res) => {
 
   await serviceRequest.save();
 
+  // Notify customer that worker accepted request
+  await sendNotification({
+    recipientRole: "customer",
+    recipientId: serviceRequest.customerId,
+    title: "Worker Connected",
+    message: `A skilled worker accepted your ${serviceRequest.category || "service"} request #${serviceRequestId.toString().slice(-6)}.`,
+    type: "order",
+  });
+
   // Populate customer and worker data for full frontend use
   const populatedRequest = await ServiceRequest.findById(serviceRequestId)
     .select("-__v")
@@ -168,6 +178,15 @@ const setQuoteAmount = asyncHandler(async (req, res) => {
   serviceRequest.quoteAmount = quoteAmount;
   await serviceRequest.save();
 
+  // Notify customer that quote is set
+  await sendNotification({
+    recipientRole: "customer",
+    recipientId: serviceRequest.customerId,
+    title: "Repair Quote Submitted",
+    message: `Worker submitted a repair quote of ₹${quoteAmount} for request #${serviceRequestId.toString().slice(-6)}.`,
+    type: "quote",
+  });
+
   const updatedServiceRequest = await ServiceRequest.findById(
     serviceRequestId
   ).select("-__v")
@@ -202,6 +221,17 @@ const acceptRepairQuote= asyncHandler(async (req, res) => {
   serviceRequest.acceptedAt = new Date();
   await serviceRequest.save();
 
+  // Notify worker that quote was approved
+  if (serviceRequest.workerId) {
+    await sendNotification({
+      recipientRole: "worker",
+      recipientId: serviceRequest.workerId,
+      title: "Repair Quote Accepted",
+      message: `Customer approved repair quote of ₹${serviceRequest.quoteAmount} for request #${serviceRequestId.toString().slice(-6)}.`,
+      type: "quote",
+    });
+  }
+
   const updatedServiceRequest = await ServiceRequest.findById(serviceRequestId).select("_id customerId workerId category description customerLocation workerLocation orderStatus quoteAmount audioNoteUrl");
 
   if (!updatedServiceRequest) {
@@ -224,6 +254,17 @@ const rejectRepairQuote = asyncHandler(async (req, res) => {
   }
   serviceRequest.orderStatus = "rejected";
   await serviceRequest.save();
+
+  // Notify worker that quote was rejected
+  if (serviceRequest.workerId) {
+    await sendNotification({
+      recipientRole: "worker",
+      recipientId: serviceRequest.workerId,
+      title: "Repair Quote Rejected",
+      message: `Customer rejected the repair quote for request #${serviceRequestId.toString().slice(-6)}.`,
+      type: "quote",
+    });
+  }
 
   const updatedServiceRequest = await ServiceRequest.findById(serviceRequestId).select("_id customerId workerId category description customerLocation workerLocation orderStatus quoteAmount audioNoteUrl");
 
@@ -724,6 +765,26 @@ const markPaymentDone = asyncHandler(async (req, res) => {
   serviceRequest.paymentStatus = "paid";
   await serviceRequest.save();
 
+  // Notify customer and worker
+  if (serviceRequest.customerId) {
+    await sendNotification({
+      recipientRole: "customer",
+      recipientId: serviceRequest.customerId,
+      title: "Payment Completed",
+      message: `Payment for service request #${serviceRequestId.toString().slice(-6)} has been completed.`,
+      type: "order",
+    });
+  }
+  if (serviceRequest.workerId) {
+    await sendNotification({
+      recipientRole: "worker",
+      recipientId: serviceRequest.workerId,
+      title: "Payment Received",
+      message: `Customer completed payment for service request #${serviceRequestId.toString().slice(-6)}.`,
+      type: "order",
+    });
+  }
+
   return res.status(200).json(
     new ApiResponse(200, serviceRequest, "Payment status updated to done")
   );
@@ -772,6 +833,26 @@ const updateJobStatus = asyncHandler(async (req, res) => {
   serviceRequest.orderStatus = newStatus;
 
   await serviceRequest.save();
+
+  // Notify customer and worker of status change
+  if (serviceRequest.customerId) {
+    await sendNotification({
+      recipientRole: "customer",
+      recipientId: serviceRequest.customerId,
+      title: "Order Status Update",
+      message: `Your service request #${serviceRequestId.toString().slice(-6)} status is now "${newStatus}".`,
+      type: "order",
+    });
+  }
+  if (serviceRequest.workerId) {
+    await sendNotification({
+      recipientRole: "worker",
+      recipientId: serviceRequest.workerId,
+      title: "Job Status Update",
+      message: `Service request #${serviceRequestId.toString().slice(-6)} status is now "${newStatus}".`,
+      type: "order",
+    });
+  }
 
   return res.status(200).json(new ApiResponse(200, serviceRequest, "Job status updated successfully"));
 });

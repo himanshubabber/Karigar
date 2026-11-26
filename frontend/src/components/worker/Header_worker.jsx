@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "bootstrap-icons/font/bootstrap-icons.css";
+import NotificationBell from "../common/NotificationBell.jsx";
 
 const Header_worker = ({ isOnline }) => {
   const [location, setLocation] = useState("");
@@ -80,6 +81,11 @@ const Header_worker = ({ isOnline }) => {
           </button>
         )}
 
+        {/* Notification Bell (Mobile) */}
+        <div className="d-lg-none me-2">
+          <NotificationBell role="worker" />
+        </div>
+
         {/* Mobile Hamburger Toggle */}
         <button
           className="navbar-toggler border-0 shadow-none"
@@ -137,6 +143,10 @@ const Header_worker = ({ isOnline }) => {
               </ul>
             </li>
           </ul>
+
+          <div className="d-none d-lg-block me-3">
+            <NotificationBell role="worker" />
+          </div>
 
           {/* Location Input */}
           <div className="d-flex justify-content-center justify-content-lg-end w-100" style={{ maxWidth: "340px" }}>

@@ -9,6 +9,7 @@ import workerRouter from "./src/routes/worker.route.js";
 import serviceRequestRouter from "./src/routes/serviceRequest.route.js";
 import paymentRouter from "./src/routes/payment.route.js";
 import adminRouter from "./src/routes/admin.route.js";
+import notificationRouter from "./src/routes/notification.route.js";
 import { ApiError } from "./src/utils/ApiError.js";
 
 
@@ -104,6 +105,7 @@ app.use("/api/v1/worker", workerRouter);
 app.use("/api/v1/admin", adminRouter);
 app.use("/api/v1/payment", paymentRouter);
 app.use("/api/v1/serviceRequest", serviceRequestRouter);
+app.use("/api/v1/notifications", notificationRouter);
 
 app.use((err, req, res, next) => {
   if (err instanceof ApiError) {

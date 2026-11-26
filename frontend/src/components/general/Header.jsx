@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import 'bootstrap-icons/font/bootstrap-icons.css';
+import NotificationBell from '../common/NotificationBell.jsx';
 
 const Header = () => {
   const [location, setLocation] = useState('');
@@ -48,6 +49,11 @@ const Header = () => {
             <i className="bi bi-tools"></i>
             Karigar
           </a>
+
+          {/* --- Notification Bell (Mobile) --- */}
+          <div className="d-lg-none me-2">
+            <NotificationBell role="customer" />
+          </div>
 
           {/* --- Mobile Toggle Button (Hamburger) --- */}
           <button
@@ -116,6 +122,9 @@ const Header = () => {
             {/* --- Right Side Actions (Location & Search) --- */}
             {/* Stack on mobile (flex-column), row on large screens (flex-lg-row) */}
             <div className="d-flex flex-column flex-lg-row align-items-stretch align-items-lg-center gap-3 justify-content-end">
+              <div className="d-none d-lg-block">
+                <NotificationBell role="customer" />
+              </div>
 
               {/* Location Input - Responsive width */}
               <div className="input-group input-group-stylish rounded-pill w-100" style={{ maxWidth: '340px' }}>

@@ -4,6 +4,7 @@ import { useAdmin } from "../../Context/Admin_context.jsx";
 import ProtectedRoute_admin from "../../components/ProtectedRoute_admin.jsx";
 import { useNavigate } from "react-router-dom";
 import { MdOutlineEdit } from "react-icons/md";
+import NotificationBell from "../../components/common/NotificationBell.jsx";
 import {
   FaUsers,
   FaWrench,
@@ -199,15 +200,44 @@ const AdminDashboard = () => {
   const [modalComment, setModalComment] = useState("");
   const [modalEditField, setModalEditField] = useState("");
   const [modalEditValue, setModalEditValue] = useState("");
+  const [activeEntityComments, setActiveEntityComments] = useState([]);
+  const [loadingComments, setLoadingComments] = useState(false);
+  const [copiedId, setCopiedId] = useState(null);
 
   const authHeaders = useMemo(() => ({ Authorization: `Bearer ${token}` }), [token]);
   const apiBaseUrl = import.meta.env.VITE_API_URL || "https://karigarbackend.vercel.app";
+
+  const adminContextNotifications = useMemo(() => {
+    const list = [];
+    if (requests && requests.length > 0) {
+      requests.forEach((r) => {
+        list.push({
+          _id: `local-req-${r._id}`,
+          title: `Elevation Request`,
+          message: `${r.email} requested upgrade to ${r.requestedRole?.toUpperCase()} role.`,
+          type: "elevation",
+          link: "requests",
+          createdAt: r.createdAt || new Date(),
+          isRead: false,
+        });
+      });
+    }
+    return list;
+  }, [requests]);
 
   const showToast = (message, type = "success") => {
     setToast({ message, type });
     setTimeout(() => {
       setToast(null);
     }, 4000);
+  };
+
+  const handleCopyId = (id) => {
+    if (!id) return;
+    navigator.clipboard.writeText(id);
+    setCopiedId(id);
+    showToast("ID copied to clipboard!", "success");
+    setTimeout(() => setCopiedId(null), 2000);
   };
 
   useEffect(() => {
@@ -472,10 +502,23 @@ const AdminDashboard = () => {
   };
 
   // Entity Modal Handlers
-  const openCommentModal = (entityType, entity) => {
+  const openCommentModal = async (entityType, entity) => {
     setActiveEntity({ entityType, ...entity });
     setModalComment("");
+    setActiveEntityComments([]);
     setModalType("comment");
+    setLoadingComments(true);
+    try {
+      const res = await axios.get(
+        `${apiBaseUrl}/api/v1/admin/comments/${entityType}/${entity._id}`,
+        { headers: authHeaders, withCredentials: true }
+      );
+      setActiveEntityComments(res.data?.data || []);
+    } catch (err) {
+      console.error("Comments fetch error:", err.message);
+    } finally {
+      setLoadingComments(false);
+    }
   };
 
   const openEditModal = (entityType, entity) => {
@@ -493,6 +536,7 @@ const AdminDashboard = () => {
   const closeModal = () => {
     setModalType(null);
     setActiveEntity(null);
+    setActiveEntityComments([]);
   };
 
   const handleModalCommentSubmit = async (e) => {
@@ -508,8 +552,16 @@ const AdminDashboard = () => {
         },
         { headers: authHeaders, withCredentials: true }
       );
-      showToast("Comment added successfully!", "success");
-      closeModal();
+      showToast("Comment saved successfully!", "success");
+      setModalComment("");
+      // Refresh comments list
+      try {
+        const res = await axios.get(
+          `${apiBaseUrl}/api/v1/admin/comments/${activeEntity.entityType}/${activeEntity._id}`,
+          { headers: authHeaders, withCredentials: true }
+        );
+        setActiveEntityComments(res.data?.data || []);
+      } catch (e) {}
     } catch (err) {
       showToast("Comment failed: " + (err.response?.data?.message || err.message), "danger");
     }
@@ -624,20 +676,66 @@ const AdminDashboard = () => {
     <ProtectedRoute_admin isAuthenticated={Boolean(token)}>
       <div className="d-flex flex-column flex-md-row min-vh-100 bg-light" style={{ fontFamily: "Inter, sans-serif" }}>
         
+        {/* Scoped styles for hover reveal and interactive IDs */}
+        <style>{`
+          .hover-reveal-content {
+            display: inline-block;
+            max-width: 220px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            vertical-align: middle;
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+          }
+          .hover-reveal-content:hover {
+            white-space: normal !important;
+            overflow: visible !important;
+            max-width: 420px !important;
+            background: #ffffff !important;
+            color: #0f172a !important;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18) !important;
+            border-radius: 6px !important;
+            padding: 4px 8px !important;
+            z-index: 100 !important;
+            position: relative !important;
+          }
+          .id-badge-copy {
+            transition: all 0.15s ease-in-out;
+            cursor: pointer;
+          }
+          .id-badge-copy:hover {
+            background-color: #e2e8f0 !important;
+            border-color: #94a3b8 !important;
+          }
+        `}</style>
+
         {/* Mobile Header (Sticky) */}
         <div className="d-md-none bg-dark text-white p-3 d-flex justify-content-between align-items-center shadow-sm sticky-top" style={{ zIndex: 1020 }}>
           <div className="d-flex align-items-center gap-2">
             <span className="p-2 rounded-3 bg-primary text-white fw-bold"><FaWrench /></span>
             <span className="fw-bold fs-5">Karigar Admin</span>
           </div>
-          <button
-            type="button"
-            className="btn btn-sm btn-outline-light"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label="Toggle navigation"
-          >
-            <FaBars />
-          </button>
+          <div className="d-flex align-items-center gap-2">
+            <NotificationBell
+              role="admin"
+              apiBaseUrl={apiBaseUrl}
+              authHeaders={authHeaders}
+              extraNotifications={adminContextNotifications}
+              onNavigate={(tabKey) => {
+                if (tabKey) setActiveTab(tabKey);
+              }}
+              isDark={true}
+            />
+            <button
+              type="button"
+              className="btn btn-sm btn-outline-light"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Toggle navigation"
+            >
+              <FaBars />
+            </button>
+          </div>
         </div>
 
         {/* Mobile Menu Backdrop */}
@@ -805,6 +903,15 @@ const AdminDashboard = () => {
             </div>
 
             <div className="d-flex flex-wrap align-items-center gap-2 w-100 w-sm-auto justify-content-between justify-content-sm-end">
+              <NotificationBell
+                role="admin"
+                apiBaseUrl={apiBaseUrl}
+                authHeaders={authHeaders}
+                extraNotifications={adminContextNotifications}
+                onNavigate={(tabKey) => {
+                  if (tabKey) setActiveTab(tabKey);
+                }}
+              />
               {lastRefreshed && (
                 <span className="text-muted small d-none d-lg-inline me-2">
                   <FaClock className="me-1" /> Refreshed: {lastRefreshed}
@@ -1075,14 +1182,28 @@ const AdminDashboard = () => {
                                   )}
                                   <div>
                                     <div className="fw-semibold text-dark">{c.fullName || "Unnamed"}</div>
-                                    <small className="text-muted" style={{ fontSize: "11px" }}>ID: {c._id}</small>
+                                    <div className="d-flex align-items-center gap-1">
+                                      <span
+                                        className="badge bg-light text-secondary border font-monospace id-badge-copy"
+                                        style={{ fontSize: "11px" }}
+                                        onClick={() => handleCopyId(c._id)}
+                                        title="Click to copy full Customer ID"
+                                      >
+                                        {c._id} {copiedId === c._id ? <FaCheck className="text-success ms-1" /> : <FaCopy className="ms-1 opacity-50" />}
+                                      </span>
+                                    </div>
                                   </div>
                                 </div>
                               </td>
                               <td className="text-nowrap">{c.email}</td>
                               <td className="text-nowrap">{c.phone || "—"}</td>
-                              <td style={{ maxWidth: 200 }} className="text-truncate" title={typeof c.address === "object" ? JSON.stringify(c.address) : c.address}>
-                                {typeof c.address === "object" ? JSON.stringify(c.address) : c.address || "—"}
+                              <td>
+                                <span
+                                  className="hover-reveal-content text-secondary"
+                                  title={typeof c.address === "object" ? JSON.stringify(c.address) : c.address || "—"}
+                                >
+                                  {typeof c.address === "object" ? JSON.stringify(c.address) : c.address || "—"}
+                                </span>
                               </td>
                               <td className="text-nowrap">
                                 {isBlocked ? (
@@ -1155,7 +1276,16 @@ const AdminDashboard = () => {
                                   )}
                                   <div>
                                     <div className="fw-semibold text-dark">{w.fullName || "Unnamed"}</div>
-                                    <small className="text-muted" style={{ fontSize: "11px" }}>ID: {w._id}</small>
+                                    <div className="d-flex align-items-center gap-1">
+                                      <span
+                                        className="badge bg-light text-secondary border font-monospace id-badge-copy"
+                                        style={{ fontSize: "11px" }}
+                                        onClick={() => handleCopyId(w._id)}
+                                        title="Click to copy full Worker ID"
+                                      >
+                                        {w._id} {copiedId === w._id ? <FaCheck className="text-success ms-1" /> : <FaCopy className="ms-1 opacity-50" />}
+                                      </span>
+                                    </div>
                                   </div>
                                 </div>
                               </td>
@@ -1229,9 +1359,26 @@ const AdminDashboard = () => {
                       {filteredRequests.length > 0 ? (
                         filteredRequests.map((req) => (
                           <tr key={req._id}>
-                            <td className="text-nowrap">
-                              <div className="fw-bold text-dark text-capitalize">{req.category || "Service Request"}</div>
-                              <small className="text-muted font-monospace" style={{ fontSize: "11px" }}>#{req._id.substring(req._id.length - 8)}</small>
+                            <td>
+                              <div className="fw-bold text-dark text-capitalize text-nowrap">{req.category || "Service Request"}</div>
+                              <div className="d-flex align-items-center gap-1 mt-1">
+                                <span
+                                  className="badge bg-light text-secondary border font-monospace id-badge-copy"
+                                  style={{ fontSize: "11px", letterSpacing: "0.5px" }}
+                                  onClick={() => handleCopyId(req._id)}
+                                  title="Click to copy full Service Request ID"
+                                >
+                                  {req._id} {copiedId === req._id ? <FaCheck className="text-success ms-1" /> : <FaCopy className="ms-1 opacity-50" />}
+                                </span>
+                              </div>
+                              {req.description && (
+                                <div
+                                  className="hover-reveal-content text-muted small mt-1"
+                                  title={req.description}
+                                >
+                                  {req.description}
+                                </div>
+                              )}
                             </td>
                             <td>
                               {req.customerId ? (
@@ -1311,7 +1458,16 @@ const AdminDashboard = () => {
                                     <div className="fw-semibold text-dark text-nowrap">
                                       {adm.fullName || "Admin"} {isSelf && <span className="badge bg-secondary ms-1">You</span>}
                                     </div>
-                                    <small className="text-muted font-monospace" style={{ fontSize: "11px" }}>ID: {adm._id}</small>
+                                    <div className="d-flex align-items-center gap-1">
+                                      <span
+                                        className="badge bg-light text-secondary border font-monospace id-badge-copy"
+                                        style={{ fontSize: "11px" }}
+                                        onClick={() => handleCopyId(adm._id)}
+                                        title="Click to copy full Admin ID"
+                                      >
+                                        {adm._id} {copiedId === adm._id ? <FaCheck className="text-success ms-1" /> : <FaCopy className="ms-1 opacity-50" />}
+                                      </span>
+                                    </div>
                                   </div>
                                 </div>
                               </td>
@@ -1386,7 +1542,11 @@ const AdminDashboard = () => {
                           <tr key={m._id}>
                             <td className="fw-semibold text-dark">{m.toEmail}</td>
                             <td>{m.subject}</td>
-                            <td style={{ maxWidth: 300 }} className="text-truncate" title={m.body}>{m.body}</td>
+                            <td>
+                              <span className="hover-reveal-content text-secondary" title={m.body}>
+                                {m.body}
+                              </span>
+                            </td>
                             <td><span className="badge bg-light text-dark border">{m.sentBy}</span></td>
                             <td className="small text-muted">{new Date(m.createdAt).toLocaleString()}</td>
                           </tr>
@@ -1719,7 +1879,7 @@ const AdminDashboard = () => {
                               <small className="text-muted">{new Date(m.createdAt).toLocaleDateString()}</small>
                             </div>
                             <div className="small fw-semibold text-primary mb-1">{m.subject}</div>
-                            <p className="text-muted small mb-0 text-truncate">{m.body}</p>
+                            <p className="hover-reveal-content text-muted small mb-0" title={m.body} style={{ maxWidth: "100%" }}>{m.body}</p>
                           </div>
                         ))}
                       </div>
@@ -1898,7 +2058,12 @@ const AdminDashboard = () => {
                           <h6 className="fw-bold text-dark mb-0">{r.email}</h6>
                           <span className="badge bg-info text-dark text-uppercase">Requested: {r.requestedRole}</span>
                         </div>
-                        <p className="text-muted small mb-1"><strong>Reason:</strong> {r.reason || "No reason specified."}</p>
+                        <p className="text-muted small mb-1">
+                          <strong>Reason: </strong>
+                          <span className="hover-reveal-content text-secondary" title={r.reason || "No reason specified."}>
+                            {r.reason || "No reason specified."}
+                          </span>
+                        </p>
                         <small className="text-muted">Requested by: {r.requestedBy || "Self"} • {new Date(r.createdAt).toLocaleString()}</small>
                       </div>
 
@@ -1931,30 +2096,89 @@ const AdminDashboard = () => {
           {/* Quick Action Modal: Comment */}
           {modalType === "comment" && activeEntity && (
             <div className="modal show d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }} tabIndex="-1">
-              <div className="modal-dialog modal-dialog-centered m-3 m-sm-auto">
+              <div className="modal-dialog modal-dialog-centered modal-lg m-3 m-sm-auto">
                 <div className="modal-content border-0 shadow-lg rounded-4">
                   <div className="modal-header border-bottom">
-                    <h6 className="modal-title fw-bold">Add Internal Note on {activeEntity.entityType}</h6>
+                    <h6 className="modal-title fw-bold">Internal Notes & Comments ({activeEntity.entityType})</h6>
                     <button type="button" className="btn-close" onClick={closeModal}></button>
                   </div>
-                  <form onSubmit={handleModalCommentSubmit}>
-                    <div className="modal-body">
-                      <p className="small text-muted mb-2">Target: <strong>{activeEntity.fullName || activeEntity._id}</strong></p>
-                      <textarea
-                        rows={4}
-                        className="form-control"
-                        placeholder="Write your note or internal feedback here..."
-                        value={modalComment}
-                        onChange={(e) => setModalComment(e.target.value)}
-                        required
-                        autoFocus
-                      />
+                  <div className="modal-body">
+                    <div className="d-flex flex-wrap justify-content-between align-items-center mb-3 p-2 rounded-3 bg-light border gap-2">
+                      <div>
+                        <span className="small text-muted">Target: </span>
+                        <strong className="text-dark">{activeEntity.fullName || activeEntity.category || "Service Request"}</strong>
+                      </div>
+                      <div className="d-flex align-items-center gap-1">
+                        <span
+                          className="badge bg-white text-secondary border font-monospace id-badge-copy"
+                          style={{ fontSize: "11px" }}
+                          onClick={() => handleCopyId(activeEntity._id)}
+                          title="Click to copy full ID"
+                        >
+                          {activeEntity._id} {copiedId === activeEntity._id ? <FaCheck className="text-success ms-1" /> : <FaCopy className="ms-1 opacity-50" />}
+                        </span>
+                      </div>
                     </div>
-                    <div className="modal-footer border-top">
-                      <button type="button" className="btn btn-sm btn-outline-secondary" onClick={closeModal}>Cancel</button>
-                      <button type="submit" className="btn btn-sm btn-primary">Save Comment</button>
+
+                    {/* Previous Comments Thread */}
+                    <div className="mb-3">
+                      <div className="d-flex justify-content-between align-items-center mb-2">
+                        <label className="form-label small fw-bold text-muted mb-0">
+                          Past Internal Comments ({activeEntityComments.length})
+                        </label>
+                        {loadingComments && <span className="small text-muted">Refreshing...</span>}
+                      </div>
+
+                      {loadingComments ? (
+                        <div className="text-center py-3 text-muted small">Loading past comments...</div>
+                      ) : activeEntityComments.length > 0 ? (
+                        <div className="border rounded-3 p-2 bg-light mb-3" style={{ maxHeight: "200px", overflowY: "auto" }}>
+                          {activeEntityComments.map((comm) => (
+                            <div key={comm._id} className="p-2 mb-2 bg-white rounded-2 shadow-sm border border-light">
+                              <div className="d-flex justify-content-between align-items-center mb-1">
+                                <span className="fw-semibold text-primary small">
+                                  {comm.adminId?.fullName || comm.adminId?.email || "Admin"}
+                                  {comm.adminId?.role && (
+                                    <span className="badge bg-light text-secondary ms-1 border" style={{ fontSize: "10px" }}>
+                                      {comm.adminId.role}
+                                    </span>
+                                  )}
+                                </span>
+                                <small className="text-muted" style={{ fontSize: "11px" }}>
+                                  {comm.createdAt ? new Date(comm.createdAt).toLocaleString() : ""}
+                                </small>
+                              </div>
+                              <p className="mb-0 small text-dark" style={{ whiteSpace: "pre-wrap" }}>{comm.comment}</p>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="border rounded-3 p-3 bg-light text-center text-muted small mb-3">
+                          No previous notes recorded for this entity yet. Add the first internal note below.
+                        </div>
+                      )}
                     </div>
-                  </form>
+
+                    {/* New Comment Input */}
+                    <form onSubmit={handleModalCommentSubmit}>
+                      <div className="mb-3">
+                        <label className="form-label small fw-bold text-muted">Add New Internal Note</label>
+                        <textarea
+                          rows={3}
+                          className="form-control"
+                          placeholder="Write your note, update, or internal feedback here..."
+                          value={modalComment}
+                          onChange={(e) => setModalComment(e.target.value)}
+                          required
+                          autoFocus
+                        />
+                      </div>
+                      <div className="modal-footer border-top px-0 pb-0 pt-3">
+                        <button type="button" className="btn btn-sm btn-outline-secondary" onClick={closeModal}>Close</button>
+                        <button type="submit" className="btn btn-sm btn-primary">Save Note</button>
+                      </div>
+                    </form>
+                  </div>
                 </div>
               </div>
             </div>

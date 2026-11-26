@@ -16,6 +16,7 @@ import {
   createAdminRequest,
   runAdminApiCall,
   commentOnEntity,
+  getEntityComments,
   editEntity,
   executeAdminAction,
   getCurrentAdmin,
@@ -51,6 +52,7 @@ router.route("/admins").get(verifyAdminJWT, authorizeAdmin("viewer", "suggester"
 router.route("/admins/:adminId/toggle-active").patch(verifyAdminJWT, authorizeAdmin("master"), toggleAdminActive);
 router.route("/admins/:adminId/role").patch(verifyAdminJWT, authorizeAdmin("master"), updateAdminRole);
 router.route("/comment").post(verifyAdminJWT, authorizeAdmin("suggester", "master"), commentOnEntity);
+router.route("/comments/:entityType/:entityId").get(verifyAdminJWT, authorizeAdmin("viewer", "suggester", "master"), getEntityComments);
 router.route("/edit").patch(verifyAdminJWT, authorizeAdmin("master"), editEntity);
 router.route("/action").post(verifyAdminJWT, authorizeAdmin("suggester", "master"), executeAdminAction);
 router.route("/api-call").post(verifyAdminJWT, authorizeAdmin("master"), runAdminApiCall);
