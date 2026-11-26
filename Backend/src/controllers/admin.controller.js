@@ -724,8 +724,9 @@ const commentOnEntity = asyncHandler(async (req, res) => {
         recipientRole: "customer",
         recipientId: sReq.customerId,
         title: "Admin Note on Service Request",
-        message: `Administrator left a note on request #${entityId.toString().slice(-6)}: "${comment.length > 70 ? comment.substring(0, 67) + "..." : comment}"`,
+        message: `Administrator left a note on request #${entityId.toString()}: "${comment.length > 70 ? comment.substring(0, 67) + "..." : comment}"`,
         type: "comment",
+        link: `/location_user?serviceRequestId=${entityId.toString()}`,
       });
     }
     if (sReq?.workerId) {
@@ -733,8 +734,9 @@ const commentOnEntity = asyncHandler(async (req, res) => {
         recipientRole: "worker",
         recipientId: sReq.workerId,
         title: "Admin Note on Service Request",
-        message: `Administrator left a note on request #${entityId.toString().slice(-6)}: "${comment.length > 70 ? comment.substring(0, 67) + "..." : comment}"`,
+        message: `Administrator left a note on request #${entityId.toString()}: "${comment.length > 70 ? comment.substring(0, 67) + "..." : comment}"`,
         type: "comment",
+        link: `/location_worker?serviceRequestId=${entityId.toString()}`,
       });
     }
   }
@@ -826,8 +828,9 @@ const editEntity = asyncHandler(async (req, res) => {
         recipientRole: "customer",
         recipientId: updated.customerId,
         title: "Service Request Updated",
-        message: `Your request #${updated._id.toString().slice(-6)} was updated: ${changeDesc}.`,
+        message: `Your request #${updated._id.toString()} was updated: ${changeDesc}.`,
         type: "order",
+        link: `/location_user?serviceRequestId=${updated._id.toString()}`,
       });
     }
     if (updated.workerId) {
@@ -835,8 +838,9 @@ const editEntity = asyncHandler(async (req, res) => {
         recipientRole: "worker",
         recipientId: updated.workerId,
         title: "Service Request Updated",
-        message: `Service request #${updated._id.toString().slice(-6)} was updated: ${changeDesc}.`,
+        message: `Service request #${updated._id.toString()} was updated: ${changeDesc}.`,
         type: "order",
+        link: `/location_worker?serviceRequestId=${updated._id.toString()}`,
       });
     }
   }
