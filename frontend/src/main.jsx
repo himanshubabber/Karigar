@@ -37,6 +37,7 @@ import { ServiceReqProvider } from './Context/Service_req_context.jsx';
 import { OtpProvider } from './Context/Otp_context.jsx';
 import { WorkerProvider, useWorker } from './Context/Worker_context.jsx';
 import { AdminProvider, useAdmin } from './Context/Admin_context.jsx';
+import { SocketProvider } from './Context/SocketContext.jsx';
 
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import ProtectedRoute_customer from './components/ProtectedRoute_customer.jsx';
@@ -190,7 +191,9 @@ createRoot(document.getElementById("root")).render(
         <CustomerProvider>
           <WorkerProvider>
             <AdminProvider>
-              <AppRouter />
+              <SocketProvider>
+                <AppRouter />
+              </SocketProvider>
             </AdminProvider>
           </WorkerProvider>
         </CustomerProvider>

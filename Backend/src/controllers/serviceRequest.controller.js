@@ -9,6 +9,15 @@ import { Cancellation } from "../models/cancellation.model.js";
 import { Customer } from "../models/customer.model.js";
 import geolib from "geolib";
 import { sendNotification } from "./notification.controller.js";
+import {
+  emitNewServiceRequest,
+  emitRequestTaken,
+  emitToServiceRequest,
+  emitWorkerLocation,
+  emitJobStatusUpdate,
+  emitQuoteUpdate,
+  emitPaymentDone,
+} from "../socket/socketManager.js";
 
 
 const createServiceRequest = asyncHandler(async (req, res) => {
@@ -40,13 +49,18 @@ const createServiceRequest = asyncHandler(async (req, res) => {
     audioNoteUrl
   });
 
-  const createdServiceRequest = await ServiceRequest.findById(serviceRequest._id).select(
-    "_id customerId category description customerLocation audioNoteUrl"
-  );
+  const createdServiceRequest = await ServiceRequest.findById(serviceRequest._id)
+    .populate("customerId", "fullName email phone address profilePhoto")
+    .select(
+      "_id customerId category description customerLocation audioNoteUrl orderStatus jobStatus visitingCharge quoteAmount createdAt"
+    );
 
   if (!createdServiceRequest) {
     throw new ApiError(500, "Service request creation failed");
   }
+
+  // Real-time broadcast to all online workers in this category
+  emitNewServiceRequest(createdServiceRequest);
 
   return res.status(201).json(
     new ApiResponse(
@@ -150,6 +164,10 @@ const acceptRequest = asyncHandler(async (req, res) => {
     throw new ApiError(500, "Failed to retrieve updated request");
   }
 
+  // Real-time WebSocket emissions
+  emitRequestTaken(serviceRequestId, workerId);
+  emitToServiceRequest(serviceRequestId, "worker_connected", populatedRequest);
+
   return res.status(200).json(
     new ApiResponse(200, populatedRequest, "Service request accepted successfully")
   );
@@ -199,6 +217,13 @@ const setQuoteAmount = asyncHandler(async (req, res) => {
     throw new ApiError(500, "Service request not found after accepting");
   }
 
+  // Real-time WebSocket quote emission
+  emitQuoteUpdate(serviceRequestId, {
+    quoteAmount,
+    action: "quote_submitted",
+    serviceRequest: updatedServiceRequest,
+  });
+
   return res
     .status(200)
     .json(
@@ -241,6 +266,12 @@ const acceptRepairQuote= asyncHandler(async (req, res) => {
     throw new ApiError(404, "Service request not found after accepting quote");
   }
 
+  // Real-time WebSocket quote acceptance
+  emitQuoteUpdate(serviceRequestId, {
+    action: "quote_accepted",
+    serviceRequest: updatedServiceRequest,
+  });
+
   return res.status(200).json(
     new ApiResponse(200, updatedServiceRequest, "Repair quote accepted successfully")
   );
@@ -275,6 +306,12 @@ const rejectRepairQuote = asyncHandler(async (req, res) => {
   if (!updatedServiceRequest) {
     throw new ApiError(404, "Service request not found after rejecting quote");
   }
+
+  // Real-time WebSocket quote rejection
+  emitQuoteUpdate(serviceRequestId, {
+    action: "quote_rejected",
+    serviceRequest: updatedServiceRequest,
+  });
 
   return res.status(200).json(
     new ApiResponse(200, updatedServiceRequest, "Repair quote rejected successfully")
@@ -342,6 +379,14 @@ const updateWorkerLocation = asyncHandler(async (req, res) => {
   if (!updatedServiceRequest) {
     throw new ApiError(404, "Service request not found after updating worker location");
   }
+
+  // Real-time WebSocket worker location stream
+  emitWorkerLocation(serviceRequestId, {
+    coordinates,
+    workerId: req.worker?._id,
+    orderStatus: serviceRequest.orderStatus,
+    timestamp: new Date(),
+  });
 
   return res.status(200).json(new ApiResponse(200, updatedServiceRequest, "Worker location and order status updated"));
 });
@@ -791,6 +836,9 @@ const markPaymentDone = asyncHandler(async (req, res) => {
     });
   }
 
+  // Real-time WebSocket payment emission
+  emitPaymentDone(serviceRequestId, { paymentStatus: "paid", serviceRequest });
+
   return res.status(200).json(
     new ApiResponse(200, serviceRequest, "Payment status updated to done")
   );
@@ -861,6 +909,13 @@ const updateJobStatus = asyncHandler(async (req, res) => {
       link: `/location_worker?serviceRequestId=${serviceRequestId.toString()}`,
     });
   }
+
+  // Real-time WebSocket job status emission
+  emitJobStatusUpdate(serviceRequestId, {
+    jobStatus: newStatus,
+    orderStatus: newStatus,
+    serviceRequest,
+  });
 
   return res.status(200).json(new ApiResponse(200, serviceRequest, "Job status updated successfully"));
 });

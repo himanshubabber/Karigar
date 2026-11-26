@@ -27,6 +27,7 @@ import { FiMapPin } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { useServiceReq } from "../../Context/Service_req_context.jsx";
 import {useWorker} from "../../Context/Worker_context.jsx"
+import { useSocket } from "../../Context/SocketContext.jsx";
 import axios from "axios";
 import api from "../../api.js";
 import Otp_timer from "../general/Otp_timer.jsx";
@@ -151,6 +152,7 @@ const Location_map = () => {
   const [quoteMessage, setQuoteMessage] = useState(null);
   const [isLocated,setisLocated]= useState(false);
   const { token } = useWorker();
+  const { socket, joinRequestRoom, leaveRequestRoom, emitWorkerLocation } = useSocket();
 
   const urlParams = new URLSearchParams(window.location.search);
   const queryServiceId = urlParams.get("serviceRequestId");
@@ -167,6 +169,56 @@ const Location_map = () => {
       }
     }
   }, [queryServiceId]);
+
+  // Real-time WebSocket room subscription & event listeners for worker
+  useEffect(() => {
+    if (!serviceRequestId) return;
+
+    joinRequestRoom(serviceRequestId);
+
+    if (!socket) return;
+
+    // Customer accepts or rejects quote
+    const handleQuoteUpdate = (data) => {
+      if (data?.action === "quote_accepted") {
+        setQuoteMessage("✅ Customer APPROVED your repair quote!");
+        updateSelectedReq((prev) => (prev ? { ...prev, orderStatus: "accepted" } : prev));
+      } else if (data?.action === "quote_rejected") {
+        setQuoteMessage("❌ Customer rejected the repair quote.");
+        updateSelectedReq((prev) => (prev ? { ...prev, orderStatus: "rejected" } : prev));
+      }
+    };
+
+    // Customer completes payment
+    const handlePaymentCompleted = () => {
+      updateSelectedReq((prev) => (prev ? { ...prev, paymentStatus: "paid" } : prev));
+    };
+
+    // Customer or system updates job status
+    const handleJobStatusUpdate = (data) => {
+      if (data?.orderStatus || data?.jobStatus) {
+        updateSelectedReq((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            jobStatus: data.jobStatus || prev.jobStatus,
+            orderStatus: data.orderStatus || prev.orderStatus,
+          };
+        });
+      }
+    };
+
+    socket.on("quote_update", handleQuoteUpdate);
+    socket.on("payment_completed", handlePaymentCompleted);
+    socket.on("job_status_update", handleJobStatusUpdate);
+
+    return () => {
+      leaveRequestRoom(serviceRequestId);
+      socket.off("quote_update", handleQuoteUpdate);
+      socket.off("payment_completed", handlePaymentCompleted);
+      socket.off("job_status_update", handleJobStatusUpdate);
+    };
+  }, [socket, serviceRequestId, joinRequestRoom, leaveRequestRoom]);
 
   useEffect(() => {
     if (serviceRequestId && (!order || order._id !== serviceRequestId)) {
@@ -194,6 +246,18 @@ const Location_map = () => {
         (pos) => {
           const coords = [pos.coords.latitude, pos.coords.longitude];
           setUserPosition(coords);
+
+          // Stream live location over WebSocket directly to customer map
+          if (serviceRequestId) {
+            emitWorkerLocation({
+              serviceRequestId,
+              coordinates: [coords[1], coords[0]], // [lng, lat]
+              workerId: order?.workerId?._id || order?.workerId,
+              heading: pos.coords.heading || 0,
+              speed: pos.coords.speed || 0,
+            });
+          }
+
           fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${coords[0]}&lon=${coords[1]}`)
             .then((res) => res.json())
             .then((data) => setAddress(data.display_name || "Address not found"))
@@ -206,7 +270,7 @@ const Location_map = () => {
     return () => {
       if (watchId) navigator.geolocation.clearWatch(watchId);
     };
-  }, [track]);
+  }, [track, serviceRequestId, emitWorkerLocation, order?.workerId]);
 
   const startTracking = () => {
     setisLocated(true);

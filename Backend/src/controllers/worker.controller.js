@@ -8,6 +8,7 @@ import jwt from "jsonwebtoken";
 import { ServiceRequest } from "../models/serviceRequest.model.js";
 import crypto from "crypto";
 import nodemailer from "nodemailer";
+import { emitJobStatusUpdate } from "../socket/socketManager.js";
 
 import { OAuth2Client } from "google-auth-library";
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -530,13 +531,20 @@ const updateWorkerLocation = asyncHandler(async (req, res) => {
       return res.status(400).json({ message: "Invalid OTP" });
     }
   
-    await ServiceRequest.findByIdAndUpdate(serviceRequestId, {
+    const updatedReq = await ServiceRequest.findByIdAndUpdate(serviceRequestId, {
       orderStatus: "completed",
       jobStatus: "completed",
       completedAt: new Date()
-    });
+    }, { new: true });
   
     await Otp.deleteOne({ serviceRequestId });
+
+    // Real-time WebSocket emission to customer and worker
+    emitJobStatusUpdate(serviceRequestId, {
+      jobStatus: "completed",
+      orderStatus: "completed",
+      serviceRequest: updatedReq,
+    });
   
     res.status(200).json({ message: "OTP verified. Job marked as completed." });
 };

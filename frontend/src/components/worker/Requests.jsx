@@ -3,9 +3,11 @@ import axios from "axios";
 import api from "../../api.js";
 import Request from "./Request";
 import { useServiceReq } from "../../Context/Service_req_context";
+import { useSocket } from "../../Context/SocketContext";
 
 const Requests = () => {
   const { serviceReqs, updateAllRequests } = useServiceReq();
+  const { socket } = useSocket();
 
   useEffect(() => {
     const fetchRequests = async () => {
@@ -26,6 +28,36 @@ const Requests = () => {
 
     fetchRequests();
   }, [updateAllRequests]);
+
+  // Real-time WebSocket: live feed updates when requests are created or taken
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleNewServiceRequest = (newReq) => {
+      if (!newReq || !newReq._id) return;
+      updateAllRequests((prev) => {
+        if (!Array.isArray(prev)) return [newReq];
+        if (prev.some((r) => r._id === newReq._id)) return prev;
+        return [newReq, ...prev];
+      });
+    };
+
+    const handleRequestTaken = ({ serviceRequestId }) => {
+      if (!serviceRequestId) return;
+      updateAllRequests((prev) => {
+        if (!Array.isArray(prev)) return [];
+        return prev.filter((r) => r._id !== serviceRequestId);
+      });
+    };
+
+    socket.on("new_service_request", handleNewServiceRequest);
+    socket.on("service_request_taken", handleRequestTaken);
+
+    return () => {
+      socket.off("new_service_request", handleNewServiceRequest);
+      socket.off("service_request_taken", handleRequestTaken);
+    };
+  }, [socket, updateAllRequests]);
 
   return (
     <div className={`container py-4 flex-grow-1 d-flex flex-column align-items-center ${serviceReqs.length === 0 ? "justify-content-center" : ""}`}>

@@ -31,6 +31,8 @@ const getNotifications = asyncHandler(async (req, res) => {
   );
 });
 
+import { emitNotification, getIO } from "../socket/socketManager.js";
+
 // Helper function to create only necessary notifications
 export const sendNotification = async ({
   recipientRole,
@@ -41,7 +43,7 @@ export const sendNotification = async ({
   link = "",
 }) => {
   try {
-    return await Notification.create({
+    const notif = await Notification.create({
       recipientRole,
       recipientId,
       title,
@@ -50,6 +52,20 @@ export const sendNotification = async ({
       link,
       isRead: false,
     });
+
+    if (notif) {
+      if (recipientId) {
+        emitNotification(recipientId, notif);
+      }
+      if (recipientRole === "admin" || recipientRole === "all") {
+        const io = getIO();
+        if (io) {
+          io.to("admin_channel").emit("new_notification", notif);
+        }
+      }
+    }
+
+    return notif;
   } catch (err) {
     console.error("Failed to send notification:", err.message);
     return null;
