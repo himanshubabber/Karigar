@@ -98,6 +98,14 @@ app.use(cookieParser());
 app.get("/", (req, res) => res.send("Hello from Express on Vercel!"));
 app.get("/api/ping", (req, res) => res.json({ ping: "pong", time: new Date() }));
 
+// Graceful handler for Socket.IO polling requests on Vercel Serverless
+app.use("/socket.io", (req, res) => {
+  res.status(200).json({
+    message: "Socket.IO real-time server runs via server.js on a persistent host (Render/Railway/local). Vercel Serverless handles REST APIs.",
+    connected: false,
+  });
+});
+
 
 
 app.use("/api/v1/customer", customerRouter);

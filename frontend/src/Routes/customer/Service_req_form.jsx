@@ -124,20 +124,62 @@ const Service_req_form = () => {
     }
 
     try {
+      setLoading(true);
       let audioNoteUrlStr = null;
 
       if (audioBlob) {
-        const audioFormData = new FormData();
-        audioFormData.append("file", audioBlob);
-        audioFormData.append("upload_preset", "ml_default");
+        const fileExt = audioBlob.type.includes("mp4") ? "mp4" : "webm";
+        let uploadSucceeded = false;
 
-        const uploadRes = await api.post(
-          `https://api.cloudinary.com/v1_1/dqzymzibc/auto/upload`,
-          audioFormData
-        );
-        audioNoteUrlStr = uploadRes.data.secure_url;
+        // 1. Direct Cloudinary upload with credentials: 'omit' to prevent CORS rejection
+        try {
+          const directFormData = new FormData();
+          directFormData.append("file", audioBlob, `audio_note.${fileExt}`);
+          directFormData.append("upload_preset", "ml_default");
+
+          const cloudRes = await fetch(
+            "https://api.cloudinary.com/v1_1/dqzymzibc/auto/upload",
+            {
+              method: "POST",
+              body: directFormData,
+              credentials: "omit", // Essential: prevents sending credentials, resolving CORS policy error
+            }
+          );
+
+          if (cloudRes.ok) {
+            const cloudData = await cloudRes.json();
+            if (cloudData.secure_url) {
+              audioNoteUrlStr = cloudData.secure_url;
+              uploadSucceeded = true;
+            }
+          }
+        } catch (directErr) {
+          console.warn("Direct Cloudinary upload failed, trying backend upload fallback:", directErr);
+        }
+
+        // 2. Resilient fallback: upload through backend endpoint if direct upload didn't succeed
+        if (!uploadSucceeded) {
+          try {
+            const backendFormData = new FormData();
+            backendFormData.append("audio", audioBlob, `audio_note.${fileExt}`);
+
+            const backendRes = await api.post(
+              "/api/v1/serviceRequest/upload-audio",
+              backendFormData,
+              {
+                headers: {
+                  "Content-Type": "multipart/form-data",
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            );
+
+            audioNoteUrlStr = backendRes.data?.data?.audioUrl || null;
+          } catch (backendErr) {
+            console.error("Backend audio upload also failed:", backendErr);
+          }
+        }
       }
-      setLoading(true);
 
       const res = await api.post(
         "/api/v1/serviceRequest/create",

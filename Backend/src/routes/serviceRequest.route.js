@@ -20,14 +20,17 @@ import {
     getCustomerHistory,
     getWorkerHistory,
     updateJobStatus,
+    uploadAudioNote,
 } from "../controllers/serviceRequest.controller.js";
 
 import verifyJWTWorker from "../middlewares/workerAuth.middleware.js";
 import verifyJWTCustomer from "../middlewares/customerAuth.middleware.js";
+import { upload } from "../middlewares/multer.middleware.js";
 
 const router = Router();
 
 router.route("/create").post(verifyJWTCustomer, createServiceRequest); 
+router.route("/upload-audio").post(verifyJWTCustomer, upload.single("audio"), uploadAudioNote);
 router.route("/find-requests").get(findRequests);
 router.route("/accept").post(verifyJWTWorker, acceptRequest);
 router.route("/:serviceRequestId/set-quote-amount").patch(verifyJWTWorker, setQuoteAmount);

@@ -4,6 +4,19 @@ import { io } from "socket.io-client";
 const SocketContext = createContext(null);
 
 const getSocketBaseUrl = () => {
+  // 1. Explicit dedicated WebSocket server (e.g., Render, Railway, EC2)
+  const explicitSocketUrl = import.meta.env.VITE_SOCKET_URL;
+  if (explicitSocketUrl) return explicitSocketUrl;
+
+  // 2. Local development
+  if (
+    typeof window !== "undefined" &&
+    (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+  ) {
+    return "http://localhost:8000";
+  }
+
+  // 3. Fallback to API URL origin
   const envUrl = import.meta.env.VITE_API_URL;
   if (envUrl) {
     try {
@@ -13,9 +26,12 @@ const getSocketBaseUrl = () => {
       return envUrl;
     }
   }
-  return typeof window !== "undefined" && window.location.hostname === "localhost"
-    ? "http://localhost:8000"
-    : "https://karigarbackend.vercel.app";
+
+  return "https://karigarbackend.vercel.app";
+};
+
+const isVercelHost = (url) => {
+  return typeof url === "string" && (url.includes("vercel.app") || url.includes("vercel.com"));
 };
 
 const getActiveUserAuth = () => {
@@ -51,17 +67,28 @@ export const SocketProvider = ({ children }) => {
   const socketRef = useRef(null);
 
   useEffect(() => {
+    const explicitSocketUrl = import.meta.env.VITE_SOCKET_URL;
     const baseUrl = getSocketBaseUrl();
+
+    // Vercel Serverless Functions do not support persistent WebSockets and return HTTP 308.
+    // If running in production against Vercel without a dedicated socket server, operate in REST mode.
+    if (!explicitSocketUrl && isVercelHost(baseUrl)) {
+      console.info(
+        "[Karigar Socket] Notice: Production backend is on Vercel Serverless (which does not support persistent WebSockets). Operating smoothly in REST polling mode. To enable live WebSockets, point VITE_SOCKET_URL to a persistent server (e.g., Render/Railway)."
+      );
+      return;
+    }
+
     const userAuth = getActiveUserAuth();
 
     const socketInstance = io(baseUrl, {
       auth: userAuth,
-      transports: ["websocket", "polling"],
+      transports: ["polling", "websocket"], // Polling first then upgrade, avoiding immediate 308 handshake failure
       reconnection: true,
-      reconnectionAttempts: 10,
-      reconnectionDelay: 1000,
+      reconnectionAttempts: 3,
+      reconnectionDelay: 2000,
       reconnectionDelayMax: 5000,
-      timeout: 20000,
+      timeout: 15000,
       withCredentials: true,
     });
 
