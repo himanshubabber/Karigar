@@ -17,6 +17,7 @@ import {
     verifyOtpForService,
     getWorkerById,
     rateWorker,
+    forgotPasswordWorker,
 } from "../controllers/worker.controller.js";
 import {upload} from "../middlewares/multer.middleware.js"
 import {verifyJWT} from "../middlewares/workerAuth.middleware.js"
@@ -26,6 +27,7 @@ const router = Router()
 router.route("/register").post(upload.single("profilePhoto"),registerWorker)
 router.route("/login").post(loginWorker)
 router.route("/google-login").post(loginWorkerWithGoogle)
+router.route("/forgot-password").post(forgotPasswordWorker)
 //secured routes
 router.route("/logout").post(verifyJWT, logoutWorker)
 router.route("/refresh-token").post(refreshAccessToken)
